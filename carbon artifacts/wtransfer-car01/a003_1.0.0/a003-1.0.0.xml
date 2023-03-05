@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/wtransfer" name="a003" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="DELETE POST PATCH GET">
+        <inSequence>
+            <googleBooks.listVolume/>
+            <respond/>
+        </inSequence>
+        <outSequence/>
+        <faultSequence/>
+    </resource>
+</api>

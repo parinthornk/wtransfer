@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="CAR03CompositeExporter" version="1.0.0-SNAPSHOT" type="carbon/application">
+        <dependency artifact="googleBooks-connector" version="1.0.0" include="true" serverRole="EnterpriseServiceBus"/>
+        <dependency artifact="car03" version="1.0.0" include="true" serverRole="EnterpriseServiceBus"/>
+    </artifact>
+</artifacts>

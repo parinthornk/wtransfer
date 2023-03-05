@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="wtransfer-runner-01" version="1.0.0-SNAPSHOT" type="carbon/application">
+        <dependency artifact="googleBooks-connector" version="1.0.0" include="true" serverRole="EnterpriseServiceBus"/>
+        <dependency artifact="sq-quarterback" version="1.0.0" include="true" serverRole="EnterpriseServiceBus"/>
+        <dependency artifact="task-quarterback" version="1.0.0" include="true" serverRole="EnterpriseServiceBus"/>
+    </artifact>
+</artifacts>

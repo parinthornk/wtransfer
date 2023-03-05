@@ -1,0 +1,11 @@
+---
+key: "car03-1.0.0"
+name : "car03"
+displayName : "car03"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/immediate"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false
+apiId : "null"
