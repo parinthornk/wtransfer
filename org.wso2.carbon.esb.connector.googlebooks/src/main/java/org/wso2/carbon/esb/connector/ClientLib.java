@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,13 +17,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 
 public class ClientLib {
-	public static JsonElement getJsonResponse(String url, String method, HashMap<String, String> headers, JsonElement jsonRequest) throws Exception {
+	public static JsonElement getJsonResponse(String url0, String method, HashMap<String, String> headers, JsonElement jsonRequest) throws Exception {
 		JsonElement jsonResponse = null;
 		HttpURLConnection conn = null;
         BufferedReader reader = null;
         OutputStream os = null;
         
         try {
+        	
+        	// TODO: ??????????
+        	String url = url0.replace(" ", "%20");        	
+        	
             conn = (HttpURLConnection)((new java.net.URL(url)).openConnection());
     		conn.setDoOutput(true);
     		conn.setRequestMethod(method.toUpperCase());
@@ -60,7 +65,7 @@ public class ClientLib {
     		try { reader.close(); } catch (Exception e1) { }
     		try { os.close(); } catch (Exception e1) { }
     		try { conn.disconnect(); } catch (Exception e1) { }
-        	throw ex;
+        	throw new Exception("Error calling endpoint: url[" + url0 + "], method[" + method + "]: " + ex);
         }
         
 		try { reader.close(); } catch (Exception ex) { }
@@ -86,8 +91,8 @@ public class ClientLib {
 		HashMap<String, Object> m = new HashMap<String, Object>(); // TODO
 		m.put("status", status);
 		m.put("retryRemaining", retryRemaining);
-		m.put("timeNextRetry", timeNextRetry);
-		m.put("timeLatestRetry", timeLatestRetry);
+		m.put("timeNextRetry", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(timeNextRetry));
+		m.put("timeLatestRetry", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(timeLatestRetry));
 		JsonElement e = new Gson().fromJson(ZConnector.ConvertToJsonString(m), JsonElement.class);
 		ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/patch-status", "post", null, e);
 	}

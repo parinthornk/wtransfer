@@ -67,6 +67,7 @@ public class DB {
 			if (e2 == null) {
 				return null;
 			} else {
+				// TODO: Timestamp format must be yyyy-mm-dd hh:mm:ss[.fffffffff]
 				return java.sql.Timestamp.valueOf(e2.getAsString());
 			}
 		} catch (Exception ex) {

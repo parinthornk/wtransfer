@@ -1,5 +1,6 @@
 package org.wso2.carbon.esb.connector;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -193,6 +194,11 @@ public class Item {
 	}
 
 	public static JsonElement toJsonElement(Item x) {
-		return new Gson().fromJson(ZConnector.ConvertToJsonString(mapCreate(x)), JsonElement.class);
+		HashMap<String, Object> map = mapCreate(x);
+		
+		map.put("timeNextRetry", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(x.timeNextRetry));
+		map.put("timeLatestRetry", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(x.timeLatestRetry));
+		
+		return new Gson().fromJson(ZConnector.ConvertToJsonString(map), JsonElement.class);
 	}
 }

@@ -4,6 +4,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 
 import org.wso2.carbon.esb.connector.ZConnector.Constant;
+import org.wso2.carbon.esb.connector.ZConnector.ZResult;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -101,6 +102,11 @@ public class Task {
 		for (JsonElement e : arr) { x[n] = parse(e); n++; }
 		return x;
 	}
+
+	public static ZResult listTasksBySchedule(String workspace, String schedule) {
+		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where workspace = '" + workspace + "' and schedule = '" + schedule + "';";
+		return DB.getJsonList(tableName, goodCamelCase, sql);
+	}
 	
 	public static ZConnector.ZResult list(String workspace) {
 		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where workspace = '" + workspace + "';";
@@ -114,6 +120,11 @@ public class Task {
 	
 	public static ZConnector.ZResult get(String workspace, Object objNameOrId) {
 		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where workspace = '" + workspace + "' and " + nameOrId + " = '" + objNameOrId + "';";
+		return DB.getJsonGet(tableName, objNameOrId, goodCamelCase, nameOrId, sql);
+	}
+
+	public static ZResult get(String workspace, String schedule, Object objNameOrId) {
+		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where workspace = '" + workspace + "' and " + nameOrId + " = '" + objNameOrId + "' and schedule = '" + schedule + "';";
 		return DB.getJsonGet(tableName, objNameOrId, goodCamelCase, nameOrId, sql);
 	}
 	

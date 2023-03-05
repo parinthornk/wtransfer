@@ -316,6 +316,17 @@ public class ZAPIV2 {
 				return process("/workspaces/" + workspace + "/schedules/" + scheduleId, "patch", query, header, bodyRaw);
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Task
+			if (match(path, method, "/workspaces/*/schedules/*/tasks, get")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				String schedule = getFromPathParamsAsString(path, 3);
+				return Task.listTasksBySchedule(workspace, schedule);
+			}
+			if (match(path, method, "/workspaces/*/schedules/*/tasks/*, get")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				String schedule = getFromPathParamsAsString(path, 3);
+				String taskId = getFromPathParamsAsString(path, 5);
+				return Task.get(workspace, schedule, taskId);
+			}
 			if (match(path, method, "/workspaces/*/tasks, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				if (query.containsKey("status")) {

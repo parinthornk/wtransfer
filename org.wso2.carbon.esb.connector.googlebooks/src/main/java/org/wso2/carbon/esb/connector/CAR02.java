@@ -4,6 +4,9 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+
+import org.wso2.carbon.esb.connector.ZConnector.Constant;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -262,7 +265,7 @@ public class CAR02 {
 					continue;
 				}
 				
-				if (item.timeNextRetry.after(now)) {
+				if (item.timeNextRetry.after(now)) { // TODO: timeNextRetry is null. wtf?
 					continue;
 				}
 				
