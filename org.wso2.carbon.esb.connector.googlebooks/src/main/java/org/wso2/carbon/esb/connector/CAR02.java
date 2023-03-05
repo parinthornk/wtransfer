@@ -221,7 +221,7 @@ public class CAR02 {
 	
 	private static JsonArray arrItemsForConstructQueueMessage = new JsonArray();
 	
-	private static ArrayList<Item> listItemsInRetryOrCreated(Workspace[] workspaces) throws Exception {
+	private static ArrayList<Item> listItemsInRetryOrCreated(Workspace[] workspaces, Timestamp now) throws Exception {
 		
 		// clear arrItemsForConstructQueueMessage
 		for (;;) {
@@ -258,12 +258,20 @@ public class CAR02 {
 				Item item = Item.parse(e);
 				
 				// TODO, check and update quota, reject if exceed
-				//???
+				if (item.retryRemaining < 1) {
+					continue;
+				}
+				
+				if (item.timeNextRetry.after(now)) {
+					continue;
+				}
 				
 				if (!itemNames.contains(item.name)) {
 					arrItemsForConstructQueueMessage.add(e);
 					itemNames.add(item.name);
 					ret.add(item);
+					
+					ClientLib.addItemLog(item, Log.Type.INFO, "Recovering Item", "Item \"" + item.name + "\" is marked as retrying and will be put to queue.");
 				}
 			}
 			
@@ -507,7 +515,7 @@ public class CAR02 {
 		generateItemsForPendingTasks(pendingTasks, now);
 		
 		// list items in retry mode or created mode
-		ArrayList<Item> itemsToQueue = listItemsInRetryOrCreated(workspaces);
+		ArrayList<Item> itemsToQueue = listItemsInRetryOrCreated(workspaces, now);
 		
 		// enqueue those items
 		enqueue(itemsToQueue, sites, pgps, configs);

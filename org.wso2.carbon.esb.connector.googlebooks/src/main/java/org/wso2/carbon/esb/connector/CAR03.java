@@ -154,11 +154,18 @@ public class CAR03 {
 			if (item != null) {
 				try {
 					Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
-					Item.Status status = Item.Status.WAITING_FOR_RETRY;
 					int retryRemaining = item.retryRemaining - 1;
-					Timestamp timeNextRetry = new Timestamp(now.getTime() + item.retryIntervalMs);
-					Timestamp timeLatestRetry = now;
-					ClientLib.updateOnExecuteFailed(item, status, retryRemaining, timeNextRetry, timeLatestRetry);
+					if (retryRemaining < 1) {
+						Timestamp timeLatestRetry = now;
+						Item.Status status = Item.Status.FAILED;
+						Timestamp timeNextRetry = now;
+						ClientLib.updateOnExecuteFailed(item, status, retryRemaining, timeNextRetry, timeLatestRetry);
+					} else {
+						Timestamp timeLatestRetry = now;
+						Item.Status status = Item.Status.WAITING_FOR_RETRY;
+						Timestamp timeNextRetry = new Timestamp(now.getTime() + item.retryIntervalMs);
+						ClientLib.updateOnExecuteFailed(item, status, retryRemaining, timeNextRetry, timeLatestRetry);
+					}
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}

@@ -26,7 +26,6 @@ public class ClientLib {
             conn = (HttpURLConnection)((new java.net.URL(url)).openConnection());
     		conn.setDoOutput(true);
     		conn.setRequestMethod(method.toUpperCase());
-    		
 
     		HashMap<String, String> hout = new HashMap<String, String>();
     		hout.put("Content-Type", "application/json");
