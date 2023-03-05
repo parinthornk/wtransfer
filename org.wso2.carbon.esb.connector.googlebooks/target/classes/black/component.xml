@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<component name="black" type="synapse/template">
-    <subComponents>
-        <component name="black">
-            <file>black.xml</file>
-            <description>black01</description>
-        </component>
-    </subComponents>
-</component>
