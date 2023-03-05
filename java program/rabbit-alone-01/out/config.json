@@ -1,0 +1,10 @@
+{
+	"host": "localhost",
+	"port": 5672,
+	"username": "guest",
+	"password": "guest",
+	"endpointMoveFile": "http://localhost:8290/immediate",
+	"endpointRabbit": "http://localhost:15672/api",
+	"queueNameDefault": "default",
+	"defaultThreadsMode": "MULTIPLE_THREADS_5"
+}

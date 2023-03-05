@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/amqp-client-5.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/commons-cli-1.5.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/gson-2.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/HdrHistogram-2.1.12.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/LatencyUtils-2.0.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/metrics-core-4.2.15.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/metrics-jmx-4.2.12.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/micrometer-commons-1.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/micrometer-core-1.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/micrometer-observation-1.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/micrometer-registry-datadog-1.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/micrometer-registry-jmx-1.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/micrometer-registry-prometheus-1.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/perf-test-2.19.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/simpleclient_common-0.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/simpleclient_tracer_common-0.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/simpleclient_tracer_otel_agent-0.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/simpleclient_tracer_otel-0.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/simpleclient-0.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/parin/eclipse-workspace/rabbit-alone-01/jars/slf4j-api-2.0.6.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,1 @@
+"C:\Program Files\WSO2\Enterprise Integrator\7.1.0\micro-integrator\bin\micro-integrator.bat"
