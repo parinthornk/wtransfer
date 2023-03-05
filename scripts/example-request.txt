@@ -1,0 +1,57 @@
+
+{
+    "name": "pds-learning-out-01",
+    "description": "PDS upload files here, WSO2 will encrypt and sent files to \"pds-learning-02\" and wait for Conicle to download.",
+    "host": "10.224.247.44",
+    "port": 22,
+    "protocol": "sftp",
+    "rootFolder": "/learningplatform/RawData",
+    "username": "learningplatformusr",
+    "password": "b94qRGpH6V10",
+    "keyPath": null
+},
+{
+    "name": "pds-learning-out-02",
+    "description": "WSO2 encrypts files from \"pds-learning-01\" and uploads them here, waiting for Conicle to download.",
+    "host": "10.224.247.44",
+    "port": 22,
+    "protocol": "sftp",
+    "rootFolder": "/learningplatform/Profile",
+    "username": "learningplatformusr",
+    "password": "b94qRGpH6V10",
+    "keyPath": null
+},
+{
+    "name": "pgp-learning-out",
+    "description": "WSO2 encrypts files from \"pds-learning-01\" and uploads them here, waiting for Conicle to download.",
+    "host": "10.224.247.44",
+    "port": 22,
+    "protocol": "sftp",
+    "rootFolder": "/learningplatform/Profile",
+    "username": "learningplatformusr",
+    "password": "b94qRGpH6V10",
+    "keyPath": null
+},
+{
+    "name": "cfg-learning-out",
+    "description": "Transfer configuration for \"pds-learning-out-01\" to \"pds-learning-out-02\".",
+    "replace": true,
+    "deletAfterSuccess": false,
+    "retryCount": 4,
+    "retryIntervalMs": 30000,
+    "fnIsFilenameToMove": "function(fileName){return fileName.endsWith(\".csv\");}",
+    "archiveFolder": "/archive",
+    "fnArcRenameTo": "function(fileName){return fileName+\".arc\";}"
+},
+{
+	"source": "pds-learning-out-01",
+	"target": "pds-learning-out-02",
+	"pgp": "pds-learning-out-02",
+	"config": "cfg-learning-out",
+	"description": "Task for encrypt files from \"pds-learning-out-01\" to \"pds-learning-out-02\"."
+}
+
+
+
+
+test-zparinthornk-notebook

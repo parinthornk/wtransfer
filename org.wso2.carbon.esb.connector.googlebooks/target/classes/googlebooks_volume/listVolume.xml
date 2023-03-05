@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template name="listVolume" xmlns="http://ws.apache.org/ns/synapse">
+    <sequence>
+        <class name="org.wso2.carbon.esb.connector.googleBooksConnector">
+            <property name="Operation" value="controller"/>
+        </class>
+        <property expression="$ctx:ftpStatusCode" name="HTTP_SC" scope="axis2" type="STRING"/>
+        <payloadFactory media-type="json">
+            <format>$1</format>
+            <args>
+                <arg evaluator="xml" expression="$ctx:wresponse"/>
+            </args>
+        </payloadFactory>
+        <respond/>
+    </sequence>
+</template>

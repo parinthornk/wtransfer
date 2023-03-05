@@ -1,0 +1,58 @@
+
+		if (match(path, method, "replacethiswith-operation0")) {
+			String workspace = getFromPathParams(path, 1);
+			return ZConnector.T_SIT.list(workspace);
+		}
+		
+		if (match(path, method, "replacethiswith-operation1")) {
+			String workspace = getFromPathParams(path, 1);
+			String name = getFromJsonBody(bodyRaw, "name");
+			String description = getFromJsonBody(bodyRaw, "description");
+			String host = getFromJsonBody(bodyRaw, "host");
+			int port = Integer.parseInt(getFromJsonBody(bodyRaw, "port"));
+			String protocol = getFromJsonBody(bodyRaw, "protocol");
+			String rootfolder = getFromJsonBody(bodyRaw, "rootfolder");
+			String username = getFromJsonBody(bodyRaw, "username");
+			String password = getFromJsonBody(bodyRaw, "password");
+			String keypath = getFromJsonBody(bodyRaw, "keypath");
+			return ZConnector.T_SIT.create(workspace, name, description, host, port, protocol, rootfolder, username, password, keypath);
+		}
+		
+		if (match(path, method, "replacethiswith-operation2")) {
+			String workspace = getFromPathParams(path, 1);
+			String site = getFromPathParams(path, 3);
+			return ZConnector.T_SIT.get(workspace, site);
+		}
+
+		if (match(path, method, "replacethiswith-operation3")) {
+			String workspace = getFromPathParams(path, 1);
+			String site = getFromPathParams(path, 3);
+			
+			String description = getFromJsonBody(bodyRaw, "description");
+			String host = getFromJsonBody(bodyRaw, "host");
+			String port = getFromJsonBody(bodyRaw, "port");
+			String protocol = getFromJsonBody(bodyRaw, "protocol");
+			String rootfolder = getFromJsonBody(bodyRaw, "rootfolder");
+			String username = getFromJsonBody(bodyRaw, "username");
+			String password = getFromJsonBody(bodyRaw, "password");
+			String keypath = getFromJsonBody(bodyRaw, "keypath");
+			
+			HashMap<String, Object> map = new HashMap<String , Object>();
+			
+			if( description != null ) { map.put("description", description); }
+			if( host != null ) { map.put("host", host); }
+			if( port != null ) { map.put("port", Integer.parseInt(port)); }
+			if( protocol != null ) { map.put("protocol", protocol); }
+			if( rootfolder != null ) { map.put("rootfolder", rootfolder); }
+			if( username != null ) { map.put("username", username); }
+			if( password != null ) { map.put("password", password); }
+			if( keypath != null ) { map.put("keypath", keypath); }
+			
+			return ZConnector.T_SIT.update(workspace, site, map);
+		}
+		
+		if (match(path, method, "replacethiswith-operation4")) {
+			String workspace = getFromPathParams(path, 1);
+			String site = getFromPathParams(path, 3);
+			return ZConnector.T_SIT.delete(workspace, site);
+		}

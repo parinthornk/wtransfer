@@ -1,0 +1,108 @@
+package com.pttdigital.transfer;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.gson.GsonBuilder;
+
+public class ZConnector {
+	
+	public static class Constant {
+		/*public static final String HOST = "localhost";
+		public static final int PORT = 2022;
+		public static final String DATABASE = "postgres";
+		public static final String USERNAME = "postgres";
+		public static final String PASSWORD = "postgres";
+		public static final String SCHEMA = "public";*/
+		
+		public static final String HOST = "10.224.146.29";
+		public static final int PORT = 5551;
+		public static final String DATABASE = "sharedev";
+		public static final String USERNAME = "apimadmin";
+		public static final String PASSWORD = "u7sHyI1$";
+		public static final String SCHEMA = "wtransfer";
+		
+		public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss";
+	}
+	
+	public static class ZResult {
+		public int statusCode = 204;
+		public String content = null;
+		public HashMap<String, String> headers = new HashMap<String, String>(); 
+		public static ZResult ERROR_501(String method, String path) {
+			ZResult ret = new ZResult();
+			HashMap<String, Object> m1 = new HashMap<String, Object>();
+			m1.put("error", "The requested operation ["+method.toUpperCase()+", "+path+"] is not recognized.");
+			ret.content = ZConnector.ConvertToJsonString(m1);
+			ret.statusCode = 501;
+			return ret;
+		}
+		public static ZResult ERROR_500(Exception ex) {
+			ZResult ret = new ZResult();
+			HashMap<String, Object> m1 = new HashMap<String, Object>();
+			m1.put("error", "" + ex);
+			ret.content = ZConnector.ConvertToJsonString(m1);
+			ret.statusCode = 500;
+			return ret;
+		}
+	}
+	
+	public static class ZObject {
+		public ZResult run(Connection connection, Statement statement, ResultSet resultSet) throws SQLException { return null; }
+		public static ZResult execute(ZObject z) {
+			Connection c = null;
+			Statement stmt = null;
+			ResultSet rs = null;
+			ZResult ret = new ZResult();
+			try {
+/*
+<dependency>
+	<groupId>org.postgresql</groupId>
+	<artifactId>postgresql</artifactId>
+	<version>42.5.1</version>
+</dependency>
+*/
+				Class.forName("org.postgresql.Driver");
+				c = DriverManager.getConnection("jdbc:postgresql://"+Constant.HOST+":"+Constant.PORT+"/"+Constant.DATABASE+"", ""+Constant.USERNAME+"", ""+Constant.PASSWORD+"");
+				stmt = c.createStatement();
+				if ("".length() != 0) { rs = stmt.executeQuery(""); }
+				ret = z.run(c, stmt, rs);
+			} catch (Exception e) {
+				Map<String, Object> m1 = new HashMap<String, Object>();
+				m1.put("error", e + "");
+				ret.content = ConvertToJsonString(m1);
+				ret.statusCode = 500;
+			}
+			try { rs.close(); } catch (Exception ex) { }
+			try { stmt.close(); } catch (Exception ex) { }
+			try { c.close(); } catch (Exception ex) { }
+			return ret;
+		}
+	}
+	
+	/*private static String specialChars = "$*&+,/:;=?@ <>#{}|\\^~[]`'\"";
+	public static void validateSpecialcharacters(String text) throws SQLException {
+		int len = specialChars.length();
+		for (int i=0;i<len;i++) {
+			char c = specialChars.charAt(i);
+			if (text.contains(c + "")) {
+				throw new SQLException("Invalid character \""+c+"\" in \""+text+"\" ."); 
+			}
+		}
+	}*/
+	
+	public static String ConvertToJsonString(Object object) {
+	    return new GsonBuilder().setPrettyPrinting().create().toJson(object);
+	}
+	
+replacethiswithsb
+}

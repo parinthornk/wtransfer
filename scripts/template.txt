@@ -1,0 +1,159 @@
+	public static class replace_this_with-className {
+		public static ZResult list(replace_this_with-fnLeadParent) {
+			return ZObject.execute(new ZObject() {
+				@Override
+				public ZResult run(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
+					String sql = "select * from " + Constant.SCHEMA + ".replace_this_with-classNamereplace_this_with-listwhereparent";
+					resultSet = statement.executeQuery(sql);
+					ArrayList<Object> ls1 = new ArrayList<Object>();
+					while (resultSet.next()) {
+						Map<String, Object> m1 = new HashMap<String, Object>();
+replace_this_with-list01
+						ls1.add(m1);
+					}
+					Map<String, Object> m2 = new HashMap<String, Object>();
+					m2.put("list", ls1);
+					ZResult ret = new ZResult();
+					ret.content = ConvertToJsonString(m2);
+					ret.statusCode = 200;
+					return ret;
+				}
+			});
+		}
+		
+		public static ZResult get(replace_this_with-fnLeadParentreplace_this_with-javaPrimaryDataType replace_this_with-nameOrId) {
+			return ZObject.execute(new ZObject() {
+				@Override
+				public ZResult run(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
+					String sql = "select * from " + Constant.SCHEMA + ".replace_this_with-className where replace_this_with-nameOrId = '" + replace_this_with-nameOrId + "'replace_this_with-updatewhereparent";
+					resultSet = statement.executeQuery(sql);
+					ArrayList<Object> ls1 = new ArrayList<Object>();
+					while (resultSet.next()) {
+						Map<String, Object> m1 = new HashMap<String, Object>();
+replace_this_with-list01
+						ls1.add(m1);
+					}
+					
+					if (ls1.size() == 0) {
+						ZResult ret = new ZResult();
+						HashMap<String, Object> m1 = new HashMap<String, Object>();
+						m1.put("error", "replace_this_with-className \"" +replace_this_with-nameOrId + "\" does not exist.");
+						ret.content = ConvertToJsonString(m1);
+						ret.statusCode = 404;
+						return ret;
+					}
+					
+					ZResult ret = new ZResult();
+					ret.content = ConvertToJsonString(ls1.get(0));
+					ret.statusCode = 200;
+					return ret;
+				}
+			});
+		}
+		
+		public static ZResult create(replace_this_with-create00) {
+			return ZObject.execute(new ZObject() {
+				@Override
+				public ZResult run(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
+					java.sql.Timestamp now = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+					Map<String, Object> mh = new HashMap<String, Object>();
+replace_this_with-createmap
+					Set<String> keys = mh.keySet();
+					String skeys = "";
+					String svalues = "";
+					for (String key : keys) {
+						skeys += key;
+						svalues += "'" + mh.get(key) + "'";
+						skeys += ", ";
+						svalues += ", ";
+					}
+					String sql = "insert into " + Constant.SCHEMA + ".replace_this_with-className ("+skeys+"created, modified) values ("+svalues+"'"+now+"', '"+now+"') returning replace_this_with-nameOrId";
+					resultSet = statement.executeQuery(sql);
+					String rName = "";
+					while (resultSet.next()) {
+						String replace_this_with-nameOrId = resultSet.getString("replace_this_with-nameOrId");
+						rName += replace_this_with-nameOrId;
+					}
+					ZResult ret = new ZResult();
+					HashMap<String, Object> m1 = new HashMap<String, Object>();
+					m1.put("replace_this_with-nameOrId", replace_this_with-returnCreatelongorint);
+					ret.content = ConvertToJsonString(m1);
+					ret.statusCode = 201;
+					return ret;
+				}
+			});
+		}
+		
+		public static ZResult update(replace_this_with-fnLeadParentreplace_this_with-javaPrimaryDataType replace_this_with-nameOrId, final HashMap<String, Object> params) {
+			return ZObject.execute(new ZObject() {
+				@Override
+				public ZResult run(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
+					java.sql.Timestamp now = new java.sql.Timestamp(Calendar.getInstance().getTimeInMillis());
+					String l = "";
+					Set<String> keys = params.keySet();
+					int count = keys.size();
+					int i = 0;
+					for (String key : keys) {
+						String fieldName = key.toLowerCase();
+						if (fieldName.compareToIgnoreCase("replace_this_with-nameOrId") == 0) {
+							System.out.println("Primary field cannot be modified. The requested field: \""+fieldName+"\" was ignored.");
+							i++;
+							continue;
+						}
+						Object fieldValue = params.get(key);
+						if (fieldValue == null) {
+							i++;
+							continue;
+						}
+						l += fieldName + " = " + "'" +fieldValue + "'";
+						if (i == count - 1) {
+						} else {
+							l += ", ";
+						}
+						i++;
+					}
+					String dsffdfds = count > 0 ? ", " : "";
+					String sql = "UPDATE " + Constant.SCHEMA + ".replace_this_with-className SET " + l + dsffdfds + "modified = '" +now + "' WHERE replace_this_with-nameOrId = '" + replace_this_with-nameOrId + "'replace_this_with-updatewhereparent";
+					int updated = statement.executeUpdate(sql);
+					if (updated == 0) {
+						ZResult ret = new ZResult();
+						HashMap<String, Object> m1 = new HashMap<String, Object>();
+						m1.put("error", "replace_this_with-className \"" +replace_this_with-nameOrId + "\" does not existreplace_this_with-existin.");
+						ret.content = ConvertToJsonString(m1);
+						ret.statusCode = 404;
+						return ret;
+					}
+					ZResult ret = new ZResult();
+					HashMap<String, Object> m1 = new HashMap<String, Object>();
+					m1.put("updated", updated);
+					ret.content = ConvertToJsonString(m1);
+					ret.statusCode = 200;
+					return ret;
+				}
+			});
+		}
+		
+		public static ZResult delete(replace_this_with-fnLeadParentreplace_this_with-javaPrimaryDataType replace_this_with-nameOrId) {
+			return ZObject.execute(new ZObject() {
+				@Override
+				public ZResult run(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
+					String sql = "delete from " + Constant.SCHEMA + ".replace_this_with-className where replace_this_with-nameOrId = '" + replace_this_with-nameOrId + "'replace_this_with-updatewhereparent";
+					int deleted = statement.executeUpdate(sql);
+					if (deleted == 0) {
+						ZResult ret = new ZResult();
+						HashMap<String, Object> m1 = new HashMap<String, Object>();
+						m1.put("error", "replace_this_with-className \"" +replace_this_with-nameOrId + "\" does not existreplace_this_with-existin.");
+						ret.content = ConvertToJsonString(m1);
+						ret.statusCode = 404;
+						return ret;
+					}
+					ZResult ret = new ZResult();
+					HashMap<String, Object> m1 = new HashMap<String, Object>();
+					m1.put("deleted", deleted);
+					ret.content = ConvertToJsonString(m1);
+					ret.statusCode = 200;
+					return ret;
+				}
+			});
+		}
+	}
