@@ -103,6 +103,8 @@ public class Main {
 				}
 				
 				try {
+					// TODO -> ?
+					System.out.println("OK[" + System.currentTimeMillis() + "]: " + message);
 					callApi(endpointMoveFile, "post", null, message);
 				} catch (Exception ex) {
 					ex.printStackTrace();

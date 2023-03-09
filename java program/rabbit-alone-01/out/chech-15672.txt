@@ -1,0 +1,1 @@
+curl -X GET "http://10.224.183.19:15672/api/vhosts" -H "Authorization: Basic enBhcmludGhvcm5rOmVzNEhCWVRS"

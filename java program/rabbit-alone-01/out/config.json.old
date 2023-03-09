@@ -1,10 +1,10 @@
 {
-	"host": "10.224.183.19",
+	"host": "localhost",
 	"port": 5672,
-	"username": "zparinthornk",
-	"password": "es4HBYTR",
+	"username": "guest",
+	"password": "guest",
 	"endpointMoveFile": "http://localhost:8290/immediate",
-	"endpointRabbit": "http://10.224.183.19:15672/api",
+	"endpointRabbit": "http://localhost:15672/api",
 	"queueNameDefault": "default",
 	"defaultThreadsMode": "MULTIPLE_THREADS_5"
 }
