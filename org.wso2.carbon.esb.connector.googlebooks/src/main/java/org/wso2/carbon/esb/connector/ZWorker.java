@@ -21,6 +21,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 import org.apache.commons.net.ftp.FTPClient;
+import org.wso2.carbon.esb.connector.ZConnector.ZResult;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -51,7 +52,7 @@ public class ZWorker {
 		ERROR,
 	}
 	
-	private static boolean isFileNameToMove(String fileName, String logic) {
+	public static boolean isFileNameToMove(String fileName, String logic) {
 		boolean ret = false;
 		StringWriter writer = new StringWriter();
 		try {
@@ -63,7 +64,6 @@ public class ZWorker {
 			ret = Boolean.parseBoolean(printed.substring(0, printed.length() - 2));
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			//log(workspace, taskId, LogType.ERROR, "updateInputStreams.isFileNameToMove", "JavaScript error: " + ex);
 		}
 		try { writer.close(); } catch (Exception ex) { }
 		return ret;
@@ -88,7 +88,7 @@ public class ZWorker {
 		return ret;
 	}
 	
-	public static ZConnector.ZResult readSiteStatus(String workspace, String siteName) {
+	/*public static ZConnector.ZResult readSiteStatus(String workspace, String siteName) {
 		FTPClient r_ftpClient = null;
 		
 		ZConnector.ZResult result = new ZConnector.ZResult();
@@ -183,7 +183,7 @@ public class ZWorker {
 		try { if (r_ftpClient != null) { r_ftpClient.disconnect(); } } catch (Exception ex) { }
 		
 		return result;
-	}
+	}*/
 	
 	private static ArrayList<String> listWorkspaces() {
 		ArrayList<String> ret = new ArrayList<String>();
@@ -1095,5 +1095,24 @@ public class ZWorker {
 			String workspace = task.getAsJsonObject().get("workspace").getAsString();
 			setTaskStatus(workspace, taskId, executeTask(task));
 		}*/
+	}
+
+	public static ZResult listObject(String workspace, String siteName) throws Exception {
+		IFileServer.FileServer server = null;
+		try {
+			JsonElement json = ZWorker.getSiteByName(workspace, siteName);
+			Site site = Site.parse(json);
+			server = IFileServer.createServer(site);
+			server.open();
+			JsonArray array = server.listObjects();
+			if (server != null) { server.close(); }
+			ZResult result = new ZResult();
+			result.statusCode = 200;
+			result.content = "{\"objects\": " + array + "}";
+			return result;
+		} catch (Exception ex) {
+			if (server != null) { server.close(); }
+			throw ex;
+		}
 	}
 }

@@ -1220,11 +1220,11 @@ public class ZAPI {
 			
 			// ------------------------------------------------------------------------------------------------------------------------ //
 			
-			if (match(path, method, "/workspaces/*/sites/*/status, get")) {
-				String workspace = getFromPathParamsAsString(path, 1);
-				String siteName = getFromPathParamsAsString(path, 3);
-				return ZWorker.readSiteStatus(workspace, siteName);
-			}
+			//if (match(path, method, "/workspaces/*/sites/*/status, get")) {
+			//	String workspace = getFromPathParamsAsString(path, 1);
+			//	String siteName = getFromPathParamsAsString(path, 3);
+			//	return ZWorker.readSiteStatus(workspace, siteName);
+			//}
 			
 			// ------------------------------------------------------------------------------------------------------------------------ //
 			

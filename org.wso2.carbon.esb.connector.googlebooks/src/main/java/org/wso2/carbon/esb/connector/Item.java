@@ -13,6 +13,42 @@ import com.google.gson.JsonObject;
 
 public class Item {
 	
+	public static class Info {
+		public String name;
+		public long size;
+		public boolean isDirectory;
+		public Timestamp timestamp;
+		
+		public Info(String _name, long _size, boolean _isDirectory, Timestamp _timestamp) {
+			name = _name;
+			size = _size;
+			isDirectory = _isDirectory;
+			timestamp = _timestamp;
+		}
+		
+		public static HashMap<String, Object> toDictionary(Info x) {
+			HashMap<String, Object> ret = new HashMap<String, Object>();
+			ret.put("name", x.name);
+			ret.put("size", x.size);
+			ret.put("isDirectory", x.isDirectory);
+			ret.put("timestamp", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(x.timestamp));
+			return ret;
+		}
+		
+		public static JsonElement toJson(Info x) {
+			return new Gson().fromJson(ZConnector.ConvertToJsonString(toDictionary(x)), JsonElement.class);
+		}
+		
+		public static Info parse(JsonElement e) {
+			JsonObject o = e.getAsJsonObject();
+			String name = o.get("name").getAsString();
+			long size = o.get("size").getAsLong();
+			boolean isDirectory = o.get("isDirectory").getAsBoolean();
+			Timestamp timestamp = Timestamp.valueOf(o.get("timestamp").getAsString());
+			return new Info(name, size, isDirectory, timestamp);
+		}
+	}
+	
 	public enum Status {
 		CREATED,
 		QUEUED,

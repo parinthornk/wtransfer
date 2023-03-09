@@ -8,9 +8,6 @@ import com.rabbitmq.client.ConnectionFactory;
 
 public class Queue {
 	
-	public static final String host = "localhost";
-	public static final int port = 5672;
-	
 	public static class Publisher {
 		
 		private static ConnectionFactory factory;
@@ -21,8 +18,10 @@ public class Queue {
 		public static void open() throws Exception {
 			queuesName.clear();
 			factory = new ConnectionFactory();
-			factory.setHost(Queue.host);
-			factory.setPort(Queue.port);
+			factory.setHost(ZConnector.Constant.Q_HOST);
+			factory.setPort(ZConnector.Constant.Q_PORT);
+			factory.setUsername(ZConnector.Constant.Q_USERNAME);
+			factory.setPassword(ZConnector.Constant.Q_PASSWORD);
 			connection = factory.newConnection();
 			channel = connection.createChannel();
 		}

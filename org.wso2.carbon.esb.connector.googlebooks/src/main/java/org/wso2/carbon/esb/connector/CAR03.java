@@ -3,10 +3,16 @@ package org.wso2.carbon.esb.connector;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.wso2.carbon.esb.connector.ZConnector.ZResult;
+
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -20,16 +26,6 @@ public class CAR03 {
 	private static String fnRenameTo(PGP pgp, String sourceFileName) {
 		// TODO, pgp rename
 		return sourceFileName;
-	}
-	
-	private static IFileServer.FileServer createServer(Site site) throws Exception {
-		if (site.protocol.equalsIgnoreCase("sftp")) {
-			return new IFileServer.ServerSFTP(site.host, site.port, site.username, site.password, site.rootFolder, site.keyPath);
-		}
-		if (site.protocol.equalsIgnoreCase("ftp")) {
-			return new IFileServer.ServerFTP(site.host, site.port, site.username, site.password, site.rootFolder);
-		}
-		throw new Exception("Failed to create FileServer: unsupported protocol \"" + site.protocol + "\".");
 	}
 
 	private static InputStream applyPGP(PGP pgp, InputStream isource) throws Exception {
@@ -85,7 +81,7 @@ public class CAR03 {
 			
 			String connSource = "host["+source.host+"], port["+source.port+"], protocol["+source.protocol+"], username["+source.username+"], password["+source.password+"], keyPath["+source.keyPath+"]";
 			try {
-				serverSource = createServer(source);
+				serverSource = IFileServer.createServer(source);
 				ClientLib.addItemLog(item, Log.Type.INFO, "connection", "Connecting source: host["+source.host+"], port["+source.port+"], protocol["+source.protocol+"], username["+source.username+"], password["+source.password+"], keyPath["+source.keyPath+"]");
 				serverSource.open();
 			} catch (Exception ex) {
@@ -110,7 +106,7 @@ public class CAR03 {
 			
 			String connTarget = "host["+target.host+"], port["+target.port+"], protocol["+target.protocol+"], username["+target.username+"], password["+target.password+"], keyPath["+target.keyPath+"]";
 			try {
-				serverTarget = createServer(target);
+				serverTarget = IFileServer.createServer(target);
 				ClientLib.addItemLog(item, Log.Type.INFO, "connection", connTarget);
 				serverTarget.open();
 			} catch (Exception ex) {
@@ -195,4 +191,61 @@ public class CAR03 {
 		
 		return ret;
 	}
+	
+	/*public static void main(String[] args) throws Exception {
+		
+		
+		
+
+		// TODO Auto-generated method stub
+		IFileServer.FileServer server = null;
+		try {
+			JsonElement json = ZWorker.getSiteByName("zparinthornk", "notebook-parinthorn");
+			
+			System.out.println(json);
+			
+			Site site = Site.parse(json);
+			
+
+			
+			
+			server = IFileServer.createServer(site);
+			
+
+			System.out.println(server.host);
+			
+			server.open();
+			
+			JsonArray array = server.listObjects(site.rootFolder);
+
+			if (server != null) { server.close(); }
+			ZResult result = new ZResult();
+			result.statusCode = 200;
+			result.content = "{\"objects\": " + array + "}";
+			System.out.println(result.content);
+		} catch (Exception ex) {
+			if (server != null) { server.close(); }
+			throw ex;
+		}
+	}*/
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

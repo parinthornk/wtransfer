@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
+import org.apache.commons.net.ftp.FTPSClient;
+import org.wso2.carbon.esb.connector.Item.Info;
 import org.wso2.carbon.esb.connector.ZConnector.Constant;
 
 import com.google.gson.Gson;
@@ -151,12 +153,11 @@ public class CAR02 {
 		return false;
 	}
 
-	private static boolean isFileToMove(String fileName, Config config) {
-		try {
-			// TODO, logic to select files
-		} catch (Exception ex) {
-			
+	private static boolean isFileToMove(Info info, ArrayList<Info> infos, Config config) {
+		if (info.isDirectory) {
+			return false;
 		}
+		// TODO Auto-generated method stub
 		return true;
 	}
 	
@@ -176,12 +177,13 @@ public class CAR02 {
 				
 				// list new items to be initiated
 				ArrayList<String> itemsNew = new ArrayList<String>(); 
-				JsonElement jsonItems = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/sites/" + task.source + "/items", "get", null, null);
-				JsonArray items = jsonItems.getAsJsonObject().get("items").getAsJsonArray();
-				for (JsonElement item : items) {
-					String fileName = item.getAsString();
-					if (isFileToMove(fileName, config)) {
-						itemsNew.add(task.workspace + ":" + task.id + ":" + fileName);
+				JsonElement jsonItems = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/sites/" + task.source + "/objects", "get", null, null);
+				JsonArray items = jsonItems.getAsJsonObject().get("objects").getAsJsonArray();
+				ArrayList<Item.Info> infos = new ArrayList<Item.Info>();
+				for (JsonElement item : items) { infos.add(Item.Info.parse(item)); }
+				for (Item.Info info : infos) {
+					if (isFileToMove(info, infos, config)) {
+						itemsNew.add(task.workspace + ":" + task.id + ":" + info.name);
 					}
 				}
 				
@@ -220,8 +222,7 @@ public class CAR02 {
 			}
 		}
 	}
-	
-	
+
 	private static JsonArray arrItemsForConstructQueueMessage = new JsonArray();
 	
 	private static ArrayList<Item> listItemsInRetryOrCreated(Workspace[] workspaces, Timestamp now) throws Exception {
@@ -480,6 +481,15 @@ public class CAR02 {
 		}
 		
 		Queue.Publisher.close();
+	}
+	
+	public static ZConnector.ZResult getResult() {
+		try {
+			car02doWork();
+			return ZConnector.ZResult.OK_200("{\"executed\": \"" + System.currentTimeMillis() + "\"}");
+		} catch (Exception ex) {
+			return ZConnector.ZResult.ERROR_500(ex);
+		}
 	}
 	
 	public static void car02doWork() throws Exception {

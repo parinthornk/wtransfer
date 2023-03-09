@@ -1,7 +1,12 @@
 package org.wso2.carbon.esb.connector;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 import org.wso2.carbon.esb.connector.ZConnector.ZResult;
 
@@ -169,10 +174,15 @@ public class ZAPIV2 {
 				String name = getFromPathParamsAsString(path, 3);
 				return Site.delete(workspace, name);
 			}
-			if (match(path, method, "/workspaces/*/sites/*/items, get")) {
+			//if (match(path, method, "/workspaces/*/sites/*/items, get")) {
+			//	String workspace = getFromPathParamsAsString(path, 1);
+			//	String name = getFromPathParamsAsString(path, 3);
+			//	return ZWorker.readSiteStatus(workspace, name);
+			//}
+			if (match(path, method, "/workspaces/*/sites/*/objects, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
-				String name = getFromPathParamsAsString(path, 3);
-				return ZWorker.readSiteStatus(workspace, name);
+				String siteName = getFromPathParamsAsString(path, 3);
+				return ZWorker.listObject(workspace, siteName);
 			}
 			if (match(path, method, "/sites, get")) {
 				return Site.list();
@@ -454,10 +464,43 @@ public class ZAPIV2 {
 				String scheduleName = getFromPathParamsAsString(path, 3);
 				return Log_Schedule.create(workspace, scheduleName, Log_Schedule.parse(new String(bodyRaw)));
 			}
+			// TODO: ----------------------------------------------------------------------------------------------------> CAR02
+			if (match(path, method, "/12c27e40-ac08-41ce-a8b7-04d3d62e0ccd, get")) {
+				return CAR02.getResult();
+			}
+			// TODO: ----------------------------------------------------------------------------------------------------> TEST EVAL
+			if (match(path, method, "/solve/*, get")) {
+				String output = renamedByLogic(getFromPathParamsAsString(path, 1), "function(x){return x+\".xyz\";}");
+				
+				HashMap<String, Object> m = new HashMap<String, Object>();
+				m.put("output", output);
+				
+				return ZResult.OK_200(ZConnector.ConvertToJsonString(m));
+			}
 			// TODO: ----------------------------------------------------------------------------------------------------> end
 		} catch (Exception ex) {
 			return ZResult.ERROR_500(ex);
 		}
 		return ZResult.ERROR_501(method, path);
+	}
+	
+	private static String renamedByLogic(String nameOld, String logic) throws Exception {
+		String nameNew = nameOld;
+		StringWriter writer = new StringWriter();
+		try {
+			ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
+			ScriptContext ctx = engine.getContext();
+			ctx.setWriter(writer);
+			engine.eval("var x = \"" + nameOld + "\";var fn = " + logic + ";print(fn(x));");
+			String printed = writer.toString();
+			//nameNew = printed.substring(0, printed.length() - 2);
+			nameNew = printed;//.substring(1, printed.length() - 1);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			try { writer.close(); } catch (Exception e1) { }
+			throw ex;
+		}
+		try { writer.close(); } catch (Exception ex) { }
+		return nameNew;
 	}
 }
