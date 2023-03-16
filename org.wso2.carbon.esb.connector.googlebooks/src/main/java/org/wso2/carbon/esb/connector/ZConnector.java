@@ -36,10 +36,15 @@ public class ZConnector {
 		public static final String PASSWORD = "u7sHyI1$";
 		public static final String SCHEMA = "wtransfer";
 		
-		public static final String Q_HOST = "10.224.183.19";
+		/*public static final String Q_HOST = "10.224.183.19";
 		public static final int Q_PORT = 5672;
 		public static final String Q_USERNAME = "zparinthornk";
-		public static final String Q_PASSWORD = "es4HBYTR";
+		public static final String Q_PASSWORD = "es4HBYTR";*/
+		
+		public static final String Q_HOST = "localhost";
+		public static final int Q_PORT = 5672;
+		public static final String Q_USERNAME = "admin";
+		public static final String Q_PASSWORD = "admin";
 		
 		public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss";
 	}

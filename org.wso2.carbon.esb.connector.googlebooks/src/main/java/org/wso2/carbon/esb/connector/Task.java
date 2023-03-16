@@ -118,6 +118,16 @@ public class Task {
 		return DB.getJsonList(tableName, goodCamelCase, sql);
 	}
 	
+	public static ZConnector.ZResult listAllByStatus(String status) {
+		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where status ilike '" + status + "';";
+		return DB.getJsonList(tableName, goodCamelCase, sql);
+	}
+	
+	public static ZConnector.ZResult listAll() {
+		String sql = "select * from " + Constant.SCHEMA + "." + tableName + ";";
+		return DB.getJsonList(tableName, goodCamelCase, sql);
+	}
+	
 	public static ZConnector.ZResult get(String workspace, Object objNameOrId) {
 		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where workspace = '" + workspace + "' and " + nameOrId + " = '" + objNameOrId + "';";
 		return DB.getJsonGet(tableName, objNameOrId, goodCamelCase, nameOrId, sql);
@@ -132,6 +142,7 @@ public class Task {
 		if (task == null) { return ZConnector.ZResult.ERROR_400(new Exception(tableName + " cannot be null.")); }
 		HashMap<String, Object> m1 = mapCreate(task);
 		m1.put("workspace", workspace);
+		m1.put("status", Status.PENDING.toString());
 		String sql = "insert into " + Constant.SCHEMA + "." + tableName + " (" + DB.concateStmtKeys(m1) + ") values (" + DB.concateStmtValues(m1) + ") returning " + nameOrId + ";";
 		return DB.getJsonCreate(sql, nameOrId);
 	}

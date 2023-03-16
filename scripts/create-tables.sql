@@ -5,7 +5,7 @@ create table workspace (
 	modified timestamp
 );
 create table site (
-	workspace text references workspace (name),
+	workspace text references workspace (name) not null,
 	name text primary key,
 	description text,
 	created timestamp,
@@ -13,59 +13,57 @@ create table site (
 	host text,
 	port integer,
 	protocol text,
-	rootfolder text,
 	username text,
 	password text,
 	keypath text
 );
-create table pgp (
-	workspace text references workspace (name),
-	name text primary key,
-	description text,
-	created timestamp,
-	modified timestamp,
-	direction text,
-	keypath text,
-	keypassword text,
-	fnrenameto text
-);
-create table config (
-	workspace text references workspace (name),
-	name text primary key,
-	description text,
-	created timestamp,
-	modified timestamp,
-	replace integer,
-	deleteaftersuccess integer,
+
+
+create table schedule (
+	
+	sitesource text references site (name) not null,
+	usedynamicdirsource boolean not null,
+	fn_dynamicdirsource text,
+	staticdirsource text references folder (name) not null,
+	
+	sitetarget text references site (name) not null,
+	usedynamicdirtarget boolean not null,
+	fn_dynamicdirtarget text,
+	staticdirtarget text references folder (name) not null,
+	
+	
+	
+	
+	
+	replacefile boolean,
 	retrycount integer,
 	retryintervalms integer,
-	fnisfilenametomove text,
-	fnrenameto text,
+	fn_iffiletomove text,
+	fn_renameto text,
 	archivefolder text,
-	fnarcrenameto text
-);
-create table schedule (
-	workspace text references workspace (name),
+	fn_archiverenameto text,
+	
+	workspace text references workspace (name) not null,
 	name text primary key,
 	description text,
-	source text references site (name),
-	target text references site (name),
-	pgp text references pgp (name),
-	config text references config (name),
+	
+	pgpdirection text,
+	pgpkeypath text,
+	pgpkeypassword text,
+	pgp_fn_renameto text,
+	
 	plan text,
 	enabled integer,
+	
+	previouscheckpoint timestamp,
 	validfrom timestamp,
 	validuntil timestamp,
 	created timestamp,
 	modified timestamp
 );
-create table task (
-	workspace text references workspace (name),
-	source text references site (name),
-	target text references site (name),
-	pgp text references pgp (name),
-	config text references config (name),
-	schedule text references schedule (name),
+create table session (
+	workspace text references workspace (name) not null,
+	schedule text references schedule (name) not null,
 	id serial8 primary key,
 	description text,
 	created timestamp,
@@ -74,15 +72,15 @@ create table task (
 );
 create table item (
 	workspace text references workspace (name),
-	task integer references task (id),
+	session integer references session (id),
 	name text primary key,
 	created timestamp,
 	modified timestamp,
-	retryQuota integer,
-	retryRemaining integer,
-	retryIntervalMs integer,
-	timeNextRetry timestamp,
-	timeLatestRetry timestamp,
+	retryquota integer,
+	retryremaining integer,
+	retryintervalms integer,
+	timenextretry timestamp,
+	timelatestretry timestamp,
 	status text
 );
 create table log_schedule (
@@ -98,7 +96,7 @@ create table log_schedule (
 create table log_task (
 	workspace text references workspace (name),
 	id serial8 primary key,
-	task integer references task (id),
+	session integer references session (id),
 	created timestamp,
 	modified timestamp,
 	logtype text,

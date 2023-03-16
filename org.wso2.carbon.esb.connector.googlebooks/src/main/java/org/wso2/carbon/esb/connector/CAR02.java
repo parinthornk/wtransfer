@@ -1,10 +1,15 @@
 package org.wso2.carbon.esb.connector;
 
+import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 import org.apache.commons.net.ftp.FTPSClient;
 import org.wso2.carbon.esb.connector.Item.Info;
@@ -153,12 +158,23 @@ public class CAR02 {
 		return false;
 	}
 
-	private static boolean isFileToMove(Info info, ArrayList<Info> infos, Config config) {
-		if (info.isDirectory) {
+	private static boolean isFileToMove(Info info, ArrayList<Info> infos, Config config) throws Exception {
+		// TODO: check sorted
+		try {
+			if (info.isDirectory) {
+				return false;
+			}
+			if (config.fnIsFileNameToMove == null) {
+				return true;
+			}
+			if (config.fnIsFileNameToMove.length() == 0) {
+				return true;
+			}
+			return FileNaming.isFileNameToMove(info.name, config.fnIsFileNameToMove);
+		} catch (Exception ex) {
+			ex.printStackTrace();
 			return false;
 		}
-		// TODO Auto-generated method stub
-		return true;
 	}
 	
 	private static void generateItemsForPendingTasks(ArrayList<Task> pendingTasks, Timestamp now) throws Exception {
@@ -225,7 +241,7 @@ public class CAR02 {
 
 	private static JsonArray arrItemsForConstructQueueMessage = new JsonArray();
 	
-	private static ArrayList<Item> listItemsInRetryOrCreated(Workspace[] workspaces, Timestamp now) throws Exception {
+	private static ArrayList<Item> listItemsInRetryOrCreated(Timestamp now) throws Exception {
 		
 		// clear arrItemsForConstructQueueMessage
 		for (;;) {
@@ -239,61 +255,61 @@ public class CAR02 {
 		
 		ArrayList<Item> ret = new ArrayList<Item>();
 		ArrayList<String> itemNames = new ArrayList<String>();
-		for (Workspace workspace : workspaces) {
-
-			// list items created
-			JsonElement jsonCreated = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace.name + "/items?status=created", "get", null, null);
-			JsonArray arrCreated = jsonCreated.getAsJsonObject().get("list").getAsJsonArray();
-			System.out.println("items in status created: " + arrCreated.size());
-			for (JsonElement e : arrCreated) {
-				Item item = Item.parse(e);
-				if (!itemNames.contains(item.name)) {
-					arrItemsForConstructQueueMessage.add(e);
-					itemNames.add(item.name);
-					ret.add(item);
-				}
+		
+		// ------------------------------------------------------------------------------------------------------------------------ //
+		
+		// list items created
+		JsonElement jsonCreated = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/items?status=created", "get", null, null);
+		JsonArray arrCreated = jsonCreated.getAsJsonObject().get("list").getAsJsonArray();
+		System.out.println("items in status created: " + arrCreated.size());
+		for (JsonElement e : arrCreated) {
+			Item item = Item.parse(e);
+			if (!itemNames.contains(item.name)) {
+				arrItemsForConstructQueueMessage.add(e);
+				itemNames.add(item.name);
+				ret.add(item);
 			}
-			
-			// list items retry
-			JsonElement jsonRetry = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace.name + "/items?status=waiting_for_retry", "get", null, null);
-			JsonArray arrRetry = jsonRetry.getAsJsonObject().get("list").getAsJsonArray();
-			System.out.println("items in status retrying: " + arrRetry.size());
-			for (JsonElement e : arrRetry) {
-				Item item = Item.parse(e);
-				
-				// TODO, check and update quota, reject if exceed
-				if (item.retryRemaining < 1) {
-					continue;
-				}
-				
-				if (item.timeNextRetry.after(now)) { // TODO: timeNextRetry is null. wtf?
-					continue;
-				}
-				
-				if (!itemNames.contains(item.name)) {
-					arrItemsForConstructQueueMessage.add(e);
-					itemNames.add(item.name);
-					ret.add(item);
-					
-					ClientLib.addItemLog(item, Log.Type.INFO, "Recovering Item", "Item \"" + item.name + "\" is marked as retrying and will be put to queue.");
-				}
-			}
-			
 		}
+		???
+		// list items retry
+		JsonElement jsonRetry = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/items?status=waiting_for_retry", "get", null, null);
+		JsonArray arrRetry = jsonRetry.getAsJsonObject().get("list").getAsJsonArray();
+		System.out.println("items in status retrying: " + arrRetry.size());
+		for (JsonElement e : arrRetry) {
+			Item item = Item.parse(e);
+			
+			// check and update quota, reject if exceed
+			if (item.retryRemaining < 1) {
+				continue;
+			}
+			
+			if (item.timeNextRetry.after(now)) {
+				continue;
+			}
+			
+			if (!itemNames.contains(item.name)) {
+				arrItemsForConstructQueueMessage.add(e);
+				itemNames.add(item.name);
+				ret.add(item);
+				
+				// this is very slow inside for-loop
+				ClientLib.addItemLog(item, Log.Type.INFO, "Recovering Item", "Item \"" + item.name + "\" is marked as retrying and will be put to queue.");
+			}
+		}
+		
+		// ------------------------------------------------------------------------------------------------------------------------ //
 		
 		System.out.println("itemsToQueue: " + ret.size());
 		return ret;
 	}
 	
-	private static ArrayList<Task> listPendingTasks(Workspace[] workspaces) throws Exception {
+	private static ArrayList<Task> listPendingTasks() throws Exception {
 		ArrayList<Task> ret = new ArrayList<Task>();
-		for (int i=0;i<workspaces.length;i++) {
-			JsonElement jsonTasks = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspaces[i].name + "/tasks?status=pending", "get", null, null);
-			JsonArray arr = jsonTasks.getAsJsonObject().get("list").getAsJsonArray();
-			for (JsonElement e : arr) {
-				Task task = Task.parse(e);
-				ret.add(task);
-			}
+		JsonElement jsonTasks = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/tasks?status=pending", "get", null, null);
+		JsonArray arr = jsonTasks.getAsJsonObject().get("list").getAsJsonArray();
+		for (JsonElement e : arr) {
+			Task task = Task.parse(e);
+			ret.add(task);
 		}
 		System.out.println("pendingTasks: " + ret.size());
 		return ret;
@@ -340,29 +356,49 @@ public class CAR02 {
 			}
 		}
 	}
-	
-	private static ArrayList<Schedule> listSchedule(Workspace[] workspaces) throws Exception{
+
+	private static ArrayList<Schedule> listAllEnabledSchedule() throws Exception{
 		ArrayList<Schedule> schedules = new ArrayList<Schedule>();
-		for (Workspace workspace : workspaces) {
-			JsonElement jsonSchedules = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace.name + "/schedules", "get", null, null);
-			
-			// plan, stringify
-			JsonArray arr = jsonSchedules.getAsJsonObject().get("list").getAsJsonArray();
-			for (JsonElement ei : arr) {
-				JsonObject o = ei.getAsJsonObject();
-				String planString = o.get("plan").toString();
-				o.remove("plan");
-				o.addProperty("plan", planString);
-			}
-			
-			Schedule[] schs = Schedule.parse(jsonSchedules.getAsJsonObject().get("list").getAsJsonArray());
-			for (Schedule s : schs) {
-				schedules.add(s);
-			}
+		JsonElement jsonSchedules = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/enabled-schedules", "get", null, null);
+		
+		// plan, stringify
+		JsonArray arr = jsonSchedules.getAsJsonObject().get("list").getAsJsonArray();
+		for (JsonElement ei : arr) {
+			JsonObject o = ei.getAsJsonObject();
+			String planString = o.get("plan").toString();
+			o.remove("plan");
+			o.addProperty("plan", planString);
 		}
-		System.out.println("schedules: " + schedules.size());
+		
+		Schedule[] schs = Schedule.parse(jsonSchedules.getAsJsonObject().get("list").getAsJsonArray());
+		for (Schedule s : schs) {
+			schedules.add(s);
+		}
 		return schedules;
 	}
+
+	//private static ArrayList<Schedule> listSchedule(Workspace[] workspaces) throws Exception{
+	//	ArrayList<Schedule> schedules = new ArrayList<Schedule>();
+	//	for (Workspace workspace : workspaces) {
+	//		JsonElement jsonSchedules = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace.name + "/schedules", "get", null, null);
+	//		
+	//		// plan, stringify
+	//		JsonArray arr = jsonSchedules.getAsJsonObject().get("list").getAsJsonArray();
+	//		for (JsonElement ei : arr) {
+	//			JsonObject o = ei.getAsJsonObject();
+	//			String planString = o.get("plan").toString();
+	//			o.remove("plan");
+	//			o.addProperty("plan", planString);
+	//		}
+	//		
+	//		Schedule[] schs = Schedule.parse(jsonSchedules.getAsJsonObject().get("list").getAsJsonArray());
+	//		for (Schedule s : schs) {
+	//			schedules.add(s);
+	//		}
+	//	}
+	//	System.out.println("schedules: " + schedules.size());
+	//	return schedules;
+	//}
 	
 	private static Workspace[] listWorkspaces() throws Exception {
 		JsonElement jsonWorkspaces = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces", "get", null, null);
@@ -437,7 +473,6 @@ public class CAR02 {
 			}
 		}
 		
-		
 		// enqueue
 		String fileName = item.name.split(":")[2];
 		String text = "{\"source\":" + siteSource + ",\"target\":" + siteTarget + ",\"pgp\":" + pgp + ",\"config\":" + config + ",\"fileName\":\"" + fileName + "\", \"item\":" + eItem + "}";
@@ -507,13 +542,13 @@ public class CAR02 {
 		Timestamp now = new Timestamp(Calendar.getInstance().getTimeInMillis());
 		
 		// list workspaces
-		Workspace[] workspaces = listWorkspaces();
+		//Workspace[] workspaces = listWorkspaces();
 		
 		// TODO: delete too old items in status created
 		//cleanUnhealthyItems(workspaces);
 		
 		// list schedules on all workspaces
-		ArrayList<Schedule> schedules = listSchedule(workspaces);
+		ArrayList<Schedule> schedules = listAllEnabledSchedule();
 		
 		// initiate tasks from triggered schedules
 		initiateTasks(schedules, now);
@@ -522,7 +557,7 @@ public class CAR02 {
 		//???
 		
 		// list pending tasks
-		ArrayList<Task> pendingTasks = listPendingTasks(workspaces);
+		ArrayList<Task> pendingTasks = listPendingTasks();
 		
 		// create new items for new pending tasks -> also update tasks status
 		generateItemsForPendingTasks(pendingTasks, now);

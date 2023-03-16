@@ -3,29 +3,54 @@ package org.wso2.carbon.esb.connector;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.wso2.carbon.esb.connector.ZConnector.ZResult;
+import org.wso2.carbon.esb.connector.IFileServer.FileServer;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class CAR03 {
 
-	private static String fnRenameTo(Config config, String sourceFileName) {
-		// TODO, rename
-		return sourceFileName;
+	private static String fnRenameTo(Config config, String sourceFileName) throws Exception {
+		if (config.fnRenameTo == null) {
+			return sourceFileName;
+		}
+		if (config.fnRenameTo.length() == 0) {
+			return sourceFileName;
+		}
+		return FileNaming.getRenamed(sourceFileName, config.fnRenameTo);
 	}
 
-	private static String fnRenameTo(PGP pgp, String sourceFileName) {
-		// TODO, pgp rename
-		return sourceFileName;
+	private static String fnArcRenameTo(Config config, String sourceFileName) throws Exception {
+		if (config.fnRenameTo == null) {
+			return sourceFileName;
+		}
+		if (config.fnRenameTo.length() == 0) {
+			return sourceFileName;
+		}
+		return FileNaming.getRenamed(sourceFileName, config.fnArcRenameTo);
+	}
+
+	private static String fnRenameTo(PGP pgp, String sourceFileName) throws Exception {
+		if (pgp.fnRenameTo == null) {
+			return sourceFileName;
+		}
+		if (pgp.fnRenameTo.length() == 0) {
+			return sourceFileName;
+		}
+		try {
+			return FileNaming.getRenamed(sourceFileName, pgp.fnRenameTo);
+		} catch (Exception e) {
+			e.printStackTrace();
+			if (pgp.direction.equalsIgnoreCase("encrypt") && !sourceFileName.toLowerCase().endsWith(".pgp")) {
+				return sourceFileName + ".pgp";
+			} else if (pgp.direction.equalsIgnoreCase("decrypt") && sourceFileName.toLowerCase().endsWith(".pgp")) {
+				return sourceFileName.substring(0, sourceFileName.length() - 4);
+			}
+			throw new Exception("Error while calculating renamed PGP file, sourceFileName[" + sourceFileName + "], direction[" + pgp.direction + "] + logic[" + pgp.fnRenameTo + "]: " + e);
+		}
 	}
 
 	private static InputStream applyPGP(PGP pgp, InputStream isource) throws Exception {
@@ -120,10 +145,12 @@ public class CAR03 {
 				throw new Exception("Error while calculating targetFileName (via config): " + ex);
 			}
 			
-			try {
-				targetFileName = fnRenameTo(pgp, fileName);
-			} catch (Exception ex) {
-				throw new Exception("Error while calculating targetFileName (via pgp): " + ex);
+			if (pgp != null) {
+				try {
+					targetFileName = fnRenameTo(pgp, fileName);
+				} catch (Exception ex) {
+					throw new Exception("Error while calculating targetFileName (via pgp): " + ex);
+				}
 			}
 
 			ClientLib.addItemLog(item, Log.Type.INFO, "connection", "Uploading file \"" + targetFileName + "\".");
@@ -137,6 +164,11 @@ public class CAR03 {
 			ClientLib.addItemLog(item, Log.Type.INFO, "setItemStatus", "set status to \"SUCCESS\".");
 
 			// ---------------------------------------------------------------------------------------------------- //
+			try {
+				archive(serverSource, fileName, config.archiveFolder, config);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
 			
 			if (serverSource != null) { serverSource.close(); }
 			if (serverTarget != null) { serverTarget.close(); }
@@ -172,80 +204,39 @@ public class CAR03 {
 		}
 	}
 
-	public static ZConnector.ZResult process(String path, String method, HashMap<String, String> query, HashMap<String, String> header, byte[] bodyRaw) {
-		
-		if (!ZAPIV2.match(path, method, "/, post")) {
-			return ZConnector.ZResult.ERROR_501(method, path);
+	private static void archive(FileServer serverSource, String fileName, String archiveFolder, Config config) throws Exception {
+		try {
+			if (archiveFolder == null) {
+				return;
+			}
+			
+			if (archiveFolder.length() == 0) {
+				return;
+			}
+			
+			if (!serverSource.directoryExists(archiveFolder)) {
+				serverSource.createDirectory(archiveFolder);
+			}
+			
+			//FTPClient_parser_become_what();
+			
+			//add_field_RICEF_dynamicDirectory();
+			
+			String renamed = fnArcRenameTo(config, fileName);
+			serverSource.move(fileName, archiveFolder + "/" + renamed);
+		} catch (Exception ex) {
+			throw new Exception("Transfer success but failed to archive file. " + ex);
 		}
-		
-		ZConnector.ZResult ret = new ZConnector.ZResult();
-		
+	}
+
+	public static ZConnector.ZResult process(String path, String method, HashMap<String, String> query, HashMap<String, String> header, byte[] bodyRaw) {
+		if (!ZAPIV2.match(path, method, "/, post")) { return ZConnector.ZResult.ERROR_501(method, path); }
 		try {
 			move(new String(bodyRaw));
-			ret.statusCode = 200;
-			ret.content = "{\"status\": \"moved\"}";
+			return ZConnector.ZResult.OK_200("{\"status\": \"moved\"}");
 		} catch (Exception e) {
 			e.printStackTrace();
 			return ZConnector.ZResult.ERROR_500(e);
 		}
-		
-		return ret;
 	}
-	
-	/*public static void main(String[] args) throws Exception {
-		
-		
-		
-
-		// TODO Auto-generated method stub
-		IFileServer.FileServer server = null;
-		try {
-			JsonElement json = ZWorker.getSiteByName("zparinthornk", "notebook-parinthorn");
-			
-			System.out.println(json);
-			
-			Site site = Site.parse(json);
-			
-
-			
-			
-			server = IFileServer.createServer(site);
-			
-
-			System.out.println(server.host);
-			
-			server.open();
-			
-			JsonArray array = server.listObjects(site.rootFolder);
-
-			if (server != null) { server.close(); }
-			ZResult result = new ZResult();
-			result.statusCode = 200;
-			result.content = "{\"objects\": " + array + "}";
-			System.out.println(result.content);
-		} catch (Exception ex) {
-			if (server != null) { server.close(); }
-			throw ex;
-		}
-	}*/
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }

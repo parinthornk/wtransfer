@@ -1,5 +1,6 @@
 package org.wso2.carbon.esb.connector;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -107,6 +108,12 @@ public class Schedule {
 		int n = 0;
 		for (JsonElement e : arr) { x[n] = parse(e); n++; }
 		return x;
+	}
+	
+	public static ZConnector.ZResult listAllEnabled() {
+		String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+		String sql = "select * from " + Constant.SCHEMA + "." + tableName + " where enabled > 0 and validfrom <= '" + now + "'::date and validuntil >= '" + now + "'::date;";
+		return DB.getJsonList(tableName, goodCamelCase, sql);
 	}
 	
 	public static ZConnector.ZResult list(String workspace) {

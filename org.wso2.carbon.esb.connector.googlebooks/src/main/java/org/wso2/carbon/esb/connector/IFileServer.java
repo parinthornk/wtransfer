@@ -1,21 +1,20 @@
 package org.wso2.carbon.esb.connector;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPSClient;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -31,6 +30,11 @@ public interface IFileServer {
 	public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception;
 	public void close();
 	public JsonArray listObjects() throws Exception;
+
+	public boolean fileExists(String file) throws Exception;
+	public boolean directoryExists(String folder) throws Exception;
+	public void createDirectory(String folder) throws Exception;
+	public void move(String fileSource, String fileNameTarget) throws Exception;
 	
 	public static abstract class FileServer implements IFileServer {
 		public String host;
@@ -68,19 +72,33 @@ public interface IFileServer {
 		private Channel channel;
 		private Session session;
 		private JSch jsch;
-		//private String authenticationKey;
+		private String authenticationKey;
 		
 		public ServerSFTP(String _host, int _port, String _username, String _password, String _rootFolder, String _authenticationKey) {
 			super(_host, _port, _username, _password, _rootFolder);
-			//authenticationKey = _authenticationKey;
+			authenticationKey = _authenticationKey;
 		}
 		
 		@Override
 		public void open() throws Exception {
+			
+			boolean useAuthKey = false;
+			if (authenticationKey != null) {
+				useAuthKey = authenticationKey.length() > 0;
+			}
+			
 			jsch = new JSch();
+			if (useAuthKey) {
+				jsch.addIdentity("sftpIdentityKey", Files.readAllBytes(Paths.get(authenticationKey)), (byte[]) null, (byte[]) null);
+			}
+			
 			session = jsch.getSession(username, host, port);
 			session.setConfig("StrictHostKeyChecking", "no");
-			session.setPassword(password);
+			
+			if (!useAuthKey) {
+				session.setPassword(password);
+			}
+			
 			session.connect();
 			channel = session.openChannel("sftp");
             channel.connect();
@@ -116,6 +134,32 @@ public interface IFileServer {
 			}
 			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
 		}
+
+		@Override
+		public boolean directoryExists(String folder) {
+			try {
+			    return sftpChannel.stat(rootFolder + "/" + folder).isDir();
+			} catch (Exception e) { }
+			return false;
+		}
+
+		@Override
+		public void createDirectory(String folder) throws SftpException {
+			sftpChannel.mkdir(rootFolder + "/" + folder);
+		}
+
+		@Override
+		public void move(String fileSource, String fileNameTarget) throws SftpException {
+			sftpChannel.rename(rootFolder + "/" + fileSource, rootFolder + "/" + fileNameTarget);
+		}
+
+		@Override
+		public boolean fileExists(String file) {
+			try {
+			    return !sftpChannel.stat(rootFolder + "/" + file).isDir();
+			} catch (Exception e) { }
+			return false;
+		}
 	}
 	
 	// TODO: FTP
@@ -126,11 +170,25 @@ public interface IFileServer {
 		public ServerFTP(String _host, int _port, String _username, String _password, String _rootFolder) {
 			super(_host, _port, _username, _password, _rootFolder);
 		}
-
+		
 		@Override
 		public void open() throws Exception {
+			
+			// zero bytes // TODO
+			
+			// .lock
+			
+			//timeout();// TODO
+			
+			// maximum file size
+			
+			// enqueue items order by ???
+			
+			// 5 threads configurable -> config in schedule
+			
 			ftpClient = new FTPClient();
 			ftpClient.connect(host, port);
+			ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 			ftpClient.enterLocalPassiveMode();
 			if (ftpClient.login(username, password)) {
 				ftpClient.cwd(rootFolder);
@@ -166,6 +224,38 @@ public interface IFileServer {
 			}
 			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
 		}
+
+		@Override
+		public boolean directoryExists(String folder) throws Exception {
+			FTPFile[] fs = ftpClient.listFiles();
+			for (FTPFile f : fs) {
+				if (f.getName().equals(folder)) {
+					return f.isDirectory();
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public void createDirectory(String folder) throws Exception {
+			ftpClient.mkd(folder);
+		}
+
+		@Override
+		public void move(String fileSource, String fileNameTarget) throws Exception {
+			ftpClient.rename(fileSource, fileNameTarget);
+		}
+
+		@Override
+		public boolean fileExists(String file) throws Exception {
+			FTPFile[] fs = ftpClient.listFiles();
+			for (FTPFile f : fs) {
+				if (f.getName().equals(file)) {
+					return f.isFile();
+				}
+			}
+			return false;
+		}
 	}
 	
 	// TODO: FTPS
@@ -182,7 +272,12 @@ public interface IFileServer {
 			ftpsClient = new FTPSClient();
 			System.out.println("calling ftpsClient.connect("+host+", "+port+") ...");
 			ftpsClient.connect(host, port);
+			ftpsClient.setFileType(FTP.BINARY_FILE_TYPE);
 			ftpsClient.enterLocalPassiveMode();
+			
+			//for_control_and_data_connection();// ???? TODO
+			
+			//anounymous(); // TODO
 			
 			System.out.println("calling ftpsClient.login("+username+", "+password+") ...");
 			if (ftpsClient.login(username, password)) {
@@ -223,6 +318,38 @@ public interface IFileServer {
 				arr.add(Item.Info.toDictionary(info));
 			}
 			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
+		}
+
+		@Override
+		public boolean directoryExists(String folder) throws Exception {
+			FTPFile[] fs = ftpsClient.listFiles();
+			for (FTPFile f : fs) {
+				if (f.getName().equals(folder)) {
+					return f.isDirectory();
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public void createDirectory(String folder) throws Exception {
+			ftpsClient.mkd(folder);
+		}
+
+		@Override
+		public void move(String fileSource, String fileNameTarget) throws Exception {
+			ftpsClient.rename(fileSource, fileNameTarget);
+		}
+
+		@Override
+		public boolean fileExists(String file) throws Exception {
+			FTPFile[] fs = ftpsClient.listFiles();
+			for (FTPFile f : fs) {
+				if (f.getName().equals(file)) {
+					return f.isFile();
+				}
+			}
+			return false;
 		}
 	}
 }

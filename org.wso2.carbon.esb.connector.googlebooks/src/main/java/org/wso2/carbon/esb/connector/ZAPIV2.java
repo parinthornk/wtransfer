@@ -242,6 +242,24 @@ public class ZAPIV2 {
 				return Config.list();
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Schedule
+			if (match(path, method, "/schedules, get")) {
+				
+				ZConnector.ZResult result = Schedule.listAllEnabled();
+				
+				// plan JSON parse
+				String fieldPlan = "plan";
+				JsonElement e = new Gson().fromJson(result.content, JsonElement.class);
+				JsonArray arr = e.getAsJsonObject().get("list").getAsJsonArray();
+				for (JsonElement je : arr) {
+					JsonObject o = je.getAsJsonObject();
+					String planText = o.get(fieldPlan).getAsString();
+					o.remove(fieldPlan);
+					o.add(fieldPlan, new Gson().fromJson(planText, JsonElement.class));
+				}
+				result.content = e.toString();
+				
+				return result;
+			}
 			if (match(path, method, "/workspaces/*/schedules, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				
@@ -344,6 +362,14 @@ public class ZAPIV2 {
 					return Task.list(workspace, status);
 				} else {
 					return Task.list(workspace);
+				}
+			}
+			if (match(path, method, "/tasks, get")) {
+				if (query.containsKey("status")) {
+					String status = query.get("status");
+					return Task.listAllByStatus(status);
+				} else {
+					return Task.listAll();
 				}
 			}
 			if (match(path, method, "/workspaces/*/tasks, post")) {
@@ -469,14 +495,14 @@ public class ZAPIV2 {
 				return CAR02.getResult();
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> TEST EVAL
-			if (match(path, method, "/solve/*, get")) {
+			/*if (match(path, method, "/solve/*, get")) {
 				String output = renamedByLogic(getFromPathParamsAsString(path, 1), "function(x){return x+\".xyz\";}");
 				
 				HashMap<String, Object> m = new HashMap<String, Object>();
 				m.put("output", output);
 				
 				return ZResult.OK_200(ZConnector.ConvertToJsonString(m));
-			}
+			}*/
 			// TODO: ----------------------------------------------------------------------------------------------------> end
 		} catch (Exception ex) {
 			return ZResult.ERROR_500(ex);
@@ -484,23 +510,8 @@ public class ZAPIV2 {
 		return ZResult.ERROR_501(method, path);
 	}
 	
-	private static String renamedByLogic(String nameOld, String logic) throws Exception {
-		String nameNew = nameOld;
-		StringWriter writer = new StringWriter();
-		try {
-			ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
-			ScriptContext ctx = engine.getContext();
-			ctx.setWriter(writer);
-			engine.eval("var x = \"" + nameOld + "\";var fn = " + logic + ";print(fn(x));");
-			String printed = writer.toString();
-			//nameNew = printed.substring(0, printed.length() - 2);
-			nameNew = printed;//.substring(1, printed.length() - 1);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			try { writer.close(); } catch (Exception e1) { }
-			throw ex;
-		}
-		try { writer.close(); } catch (Exception ex) { }
-		return nameNew;
+	public static void main(String[] args) {
+		ZConnector.ZResult result = Schedule.listAllEnabled();
+		System.out.println(result.content);
 	}
 }
