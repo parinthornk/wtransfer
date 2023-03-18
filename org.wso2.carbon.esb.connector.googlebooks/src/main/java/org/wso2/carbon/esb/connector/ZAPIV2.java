@@ -509,9 +509,4 @@ public class ZAPIV2 {
 		}
 		return ZResult.ERROR_501(method, path);
 	}
-	
-	public static void main(String[] args) {
-		ZConnector.ZResult result = Schedule.listAllEnabled();
-		System.out.println(result.content);
-	}
 }

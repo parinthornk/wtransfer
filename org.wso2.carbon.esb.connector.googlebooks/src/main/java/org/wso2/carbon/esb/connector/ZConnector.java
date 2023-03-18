@@ -17,24 +17,24 @@ import com.google.gson.GsonBuilder;
 public class ZConnector {
 	
 	public static class Constant {
-		/*public static final String HOST = "localhost";
+		public static final String HOST = "localhost";
 		public static final int PORT = 2022;
 		public static final String DATABASE = "postgres";
 		public static final String USERNAME = "postgres";
 		public static final String PASSWORD = "postgres";
 		public static final String SCHEMA = "public";
 		
-		public static final String Q_HOST = "localhost";
+		/*public static final String Q_HOST = "localhost";
 		public static final int Q_PORT = 5672;
 		public static final String Q_USERNAME = "guest";
 		public static final String Q_PASSWORD = "guest*/
 		
-		public static final String HOST = "10.224.146.29";
+		/*public static final String HOST = "10.224.146.29";
 		public static final int PORT = 5551;
 		public static final String DATABASE = "sharedev";
 		public static final String USERNAME = "apimadmin";
 		public static final String PASSWORD = "u7sHyI1$";
-		public static final String SCHEMA = "wtransfer";
+		public static final String SCHEMA = "wtransfer";*/
 		
 		/*public static final String Q_HOST = "10.224.183.19";
 		public static final int Q_PORT = 5672;
@@ -132,7 +132,9 @@ public class ZConnector {
 	}*/
 	
 	public static String ConvertToJsonString(Object object) {
-	    return new GsonBuilder().setPrettyPrinting().create().toJson(object);
+	    //return new GsonBuilder().setPrettyPrinting().create().toJson(object);
+		
+		return new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(object);
 	}
 	
 	public static class T_WKS {

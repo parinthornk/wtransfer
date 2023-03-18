@@ -270,8 +270,9 @@ public class CAR02 {
 				ret.add(item);
 			}
 		}
-		???
-		// list items retry
+		
+		
+		// list items retry: TODO
 		JsonElement jsonRetry = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/items?status=waiting_for_retry", "get", null, null);
 		JsonArray arrRetry = jsonRetry.getAsJsonObject().get("list").getAsJsonArray();
 		System.out.println("items in status retrying: " + arrRetry.size());
@@ -563,7 +564,7 @@ public class CAR02 {
 		generateItemsForPendingTasks(pendingTasks, now);
 		
 		// list items in retry mode or created mode
-		ArrayList<Item> itemsToQueue = listItemsInRetryOrCreated(workspaces, now);
+		ArrayList<Item> itemsToQueue = listItemsInRetryOrCreated(now);
 		
 		// enqueue those items
 		enqueue(itemsToQueue, sites, pgps, configs);

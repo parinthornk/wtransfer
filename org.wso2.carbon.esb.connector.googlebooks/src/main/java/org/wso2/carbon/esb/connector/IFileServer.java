@@ -1,6 +1,5 @@
 package org.wso2.carbon.esb.connector;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
