@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.wso2.carbon.esb.connector.Log_Item;
 import org.wso2.carbon.esb.connector.ZConnector;
 import org.wso2.carbon.esb.connector.ZConnector.Constant;
 import org.wso2.carbon.esb.connector.ZConnector.ZResult;
@@ -127,6 +126,64 @@ public class ZAPIV3 {
 				JsonElement e = DB.executeGet(sql);
 				return ZResult.OK_200(e.toString());
 			}
+			if (match(path, method, "/workspaces/*/sites/*/objects, get")) {
+
+				String absolutePath = "/";
+				if (query == null) {
+					//return ZResult.ERROR_400(new Exception("Query parameter: \"filePath\" is required."));
+				} else if (!query.containsKey("path")) {
+					//return ZResult.ERROR_400(new Exception("Query parameter: \"filePath\" is required."));
+				} else {
+					absolutePath = query.get("path");
+					while (absolutePath.startsWith("/")) {
+						absolutePath = absolutePath.substring(1, absolutePath.length());
+					}
+					absolutePath = "/" + absolutePath;
+				}
+				
+				String workspace = getFromPathParamsAsString(path, 1);
+				String site = getFromPathParamsAsString(path, 3);
+				String sql = DB.sqlGetInWorkspace(c, site, workspace);
+				JsonElement e = DB.executeGet(sql);
+				
+				IFileServer server = null;
+				try {
+					Site s = (Site) DB.parse(Site.class, e.getAsJsonObject());
+					server = IFileServer.createServer(s);
+					server.open();
+					
+					System.out.println("server.listObjects(" + absolutePath + ");");
+					JsonArray array = server.listObjects(absolutePath);
+					if (server != null) { server.close(); }
+					ZResult result = new ZResult();
+					result.statusCode = 200;
+					result.content = "{\"count\":" + array.size() + ", \"objects\": " + array + "}";
+					return result;
+				} catch (Exception ex) {
+					if (server != null) { server.close(); }
+					throw ex;
+				}
+				
+			}
+			
+			/*
+		IFileServer.FileServer server = null;
+		try {
+			JsonElement json = ZWorker.getSiteByName(workspace, siteName);
+			Site site = Site.parse(json);
+			server = IFileServer.createServer(site);
+			server.open();
+			JsonArray array = server.listObjects();
+			if (server != null) { server.close(); }
+			ZResult result = new ZResult();
+			result.statusCode = 200;
+			result.content = "{\"objects\": " + array + "}";
+			return result;
+		} catch (Exception ex) {
+			if (server != null) { server.close(); }
+			throw ex;
+		}*/
+			
 			if (match(path, method, "/workspaces/*/sites/*, patch")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String site = getFromPathParamsAsString(path, 3);
@@ -362,27 +419,9 @@ public class ZAPIV3 {
 	
 	public static void main(String[] arg) throws Exception {
 		
-		Schedule s1 = new Schedule();
-		s1.siteSource = "sftp-002";
-		s1.siteTarget = "sftp-003";
-		s1.enabled = false;
-		s1.name = "sch-002";
-		
-		/*Site s1 = new Site();
-		s1.name = "sftp-003";
-		s1.protocol = "sftp";
-		s1.port = 22;*/
-		
-		/*Workspace w1 = new Workspace();
-		w1.name = "zparin";
-		w1.description = "test workspace";*/
-		
-		ZConnector.ZResult ret = process("/schedules", "get", new HashMap<String, String>(Map.of(
-		    "available", "true"
-		)), null, DB.toJsonString(s1));
+		ZConnector.ZResult ret = process("/workspaces/admin-42/sites/zparin-ftp/objects", "get", new HashMap<String, String>(Map.of(
+		    "path", "/ftp/alpineftp/fi/arc"
+		)), null, (byte[]) null);
 		System.out.println(ret.content);
-		
-		JsonArray arr = new Gson().fromJson(ret.content, JsonObject.class).get("list").getAsJsonArray();
-		System.out.println("arr: " + arr.size());
 	}
 }
