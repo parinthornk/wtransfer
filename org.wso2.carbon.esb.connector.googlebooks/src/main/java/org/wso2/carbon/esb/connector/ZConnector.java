@@ -47,6 +47,8 @@ public class ZConnector {
 		public static final String Q_PASSWORD = "admin";
 		
 		public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss";
+		
+		public static final long MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
 	}
 	
 	public static class ZResult {
@@ -75,6 +77,14 @@ public class ZConnector {
 			m1.put("error", "" + ex);
 			ret.content = ZConnector.ConvertToJsonString(m1);
 			ret.statusCode = 400;
+			return ret;
+		}
+		public static ZResult ERROR_501(Exception ex) {
+			ZResult ret = new ZResult();
+			HashMap<String, Object> m1 = new HashMap<String, Object>();
+			m1.put("error", "" + ex);
+			ret.content = ZConnector.ConvertToJsonString(m1);
+			ret.statusCode = 501;
 			return ret;
 		}
 		public static ZResult OK_200(String json) {

@@ -29,4 +29,10 @@ public class Session {
 		s.status = query.get(wordStatus); // TODO: need to modify "wordStatus" accordingly
 		return s.status;
 	}
+	
+	public enum Status {
+		CREATED,
+		ERROR,
+		EXECUTED,
+	}
 }

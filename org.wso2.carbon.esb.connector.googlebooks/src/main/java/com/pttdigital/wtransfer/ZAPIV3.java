@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +108,11 @@ public class ZAPIV3 {
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Site
 			c = Site.class;
+			if (match(path, method, "/sites, get")) {
+				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\";";
+				JsonElement e = DB.executeList(sql);
+				return ZResult.OK_200(e.toString());
+			}
 			if (match(path, method, "/workspaces/*/sites, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String sql = DB.sqlListInWorkspace(c, workspace);
@@ -140,6 +146,8 @@ public class ZAPIV3 {
 					}
 					absolutePath = "/" + absolutePath;
 				}
+				
+				while (absolutePath.contains("%20")) { absolutePath = absolutePath.replace("%20", " "); }
 				
 				String workspace = getFromPathParamsAsString(path, 1);
 				String site = getFromPathParamsAsString(path, 3);
@@ -213,9 +221,9 @@ public class ZAPIV3 {
 						String now = "2023-03-18 10:54:00"; // TODO -> require "now" from main looping
 						String sql;
 						if (enabled) {
-							sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where (\"enabled\" = 'true') and ((\"validFrom\" is null) or (\"validFrom\" <= '" + now + "'::date)) and ((\"validUntil\" is null) or (\"validUntil\" >= '" + now + "'::date));";
+							sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where (\"enabled\" = 'true') and ((\"validFrom\" is null) or (\"validFrom\" <= '" + now + "')) and ((\"validUntil\" is null) or (\"validUntil\" >= '" + now + "'));"; // TODO: direct wording is too risk
 						} else {
-							sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where (\"enabled\" = 'false') or ((\"validFrom\" is not null) and (\"validFrom\" > '" + now + "'::date)) or ((\"validUntil\" is not null) and (\"validUntil\" < '" + now + "'::date))";
+							sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where (\"enabled\" = 'false') or ((\"validFrom\" is not null) and (\"validFrom\" > '" + now + "')) or ((\"validUntil\" is not null) and (\"validUntil\" < '" + now + "'))"; // TODO: direct wording is too risk
 						}
 						JsonElement e = DB.executeList(sql);
 						return ZResult.OK_200(e.toString());
@@ -225,18 +233,46 @@ public class ZAPIV3 {
 				return ZResult.OK_200(e.toString());
 			}
 			if (match(path, method, "/workspaces/*/schedules, get")) {
-				Set<String> ks = query.keySet();
-				for (String s : ks) {
-					System.out.println("query[" + s + "], value[" + query.get(s) + "];");
-				}
 				String workspace = getFromPathParamsAsString(path, 1);
 				String sql = DB.sqlListInWorkspace(c, workspace);
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
+			if (match(path, method, "/schedules/update-checkpoint, post")) {
+				String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(new Timestamp(Calendar.getInstance().getTimeInMillis())); // TODO
+				String sql = "update " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" set \"previousCheckpoint\" = '" + now + "', \"modified\" = '" + now + "' where (\"enabled\" = 'true') and ((\"validFrom\" is null) or (\"validFrom\" <= '" + now + "')) and ((\"validUntil\" is null) or (\"validUntil\" >= '" + now + "')) returning *;"; // TODO: direct wording is too risk
+				JsonElement e = DB.executeList(sql);
+				return ZResult.OK_200(e.toString());
+			}
 			if (match(path, method, "/workspaces/*/schedules, post")) {
+				
+				
 				String workspace = getFromPathParamsAsString(path, 1);
-				String sql = DB.sqlCreateInWorkspace(c, workspace, new String(bodyRaw));
+				
+				String plan = Schedule.getPlanningArray(bodyRaw);
+				if (plan == null) {
+					return ZResult.ERROR_400(new Exception("Parameter \"" + Schedule.wordPlan + "\" is required."));
+				}
+				Schedule.validatePlanningArray(plan);
+				
+				
+				String body = new String(bodyRaw);
+				Schedule schedule = (Schedule) DB.parse(c, new Gson().fromJson(body, JsonObject.class));
+				
+				if (schedule.useDynamicDirSource || schedule.useDynamicDirTarget) {
+					return ZResult.ERROR_501(new Exception("Dynamic directory is not yet supported."));
+				}
+				
+				if (!schedule.useDynamicDirSource && schedule.staticDirSource == null) {
+					return ZResult.ERROR_400(new Exception("Missing required field \"staticDirSource\"."));
+				}
+				if (!schedule.useDynamicDirTarget && schedule.staticDirTarget == null) {
+					return ZResult.ERROR_400(new Exception("Missing required field \"staticDirTarget\"."));
+				}
+				
+				
+				
+				String sql = DB.sqlCreateInWorkspace(c, workspace, body);
 				JsonElement e = DB.executeInsert(c, sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -250,6 +286,12 @@ public class ZAPIV3 {
 			if (match(path, method, "/workspaces/*/schedules/*, patch")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String schedule = getFromPathParamsAsString(path, 3);
+				
+				String plan = Schedule.getPlanningArray(bodyRaw);
+				if (plan != null) {
+					Schedule.validatePlanningArray(plan);
+				}
+				
 				String sql = DB.sqlUpdateInWorkspace(c, new Gson().fromJson(new String(bodyRaw), JsonObject.class), schedule, workspace);
 				JsonElement e = DB.executeUpdate(sql, c.getSimpleName(), schedule);
 				return ZResult.OK_200(e.toString());
@@ -415,13 +457,5 @@ public class ZAPIV3 {
 			return ZResult.ERROR_500(ex);
 		}
 		return ZResult.ERROR_501(method, path);
-	}
-	
-	public static void main(String[] arg) throws Exception {
-		
-		ZConnector.ZResult ret = process("/workspaces/admin-42/sites/zparin-ftp/objects", "get", new HashMap<String, String>(Map.of(
-		    "path", "/ftp/alpineftp/fi/arc"
-		)), null, (byte[]) null);
-		System.out.println(ret.content);
 	}
 }
