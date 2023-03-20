@@ -43,8 +43,8 @@ public class ZConnector {
 		
 		public static final String Q_HOST = "localhost";
 		public static final int Q_PORT = 5672;
-		public static final String Q_USERNAME = "admin";
-		public static final String Q_PASSWORD = "admin";
+		public static final String Q_USERNAME = "guest";
+		public static final String Q_PASSWORD = "guest";
 		
 		public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss";
 		

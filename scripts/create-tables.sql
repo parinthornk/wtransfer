@@ -63,8 +63,13 @@ create table "Session" (
 
 create table "Item" (
 	"workspace" text references "Workspace" (name),
-	"session" integer references "Session" (id),
+	"session" bigint references "Session" (id),
 	"name" text primary key,
+	"description" text,
+	"folder" text,
+	"folderArchive" text,
+	"fileName" text,
+	"fileNameArchive" text,
 	"created" timestamp,
 	"modified" timestamp,
 	"retryQuota" integer,

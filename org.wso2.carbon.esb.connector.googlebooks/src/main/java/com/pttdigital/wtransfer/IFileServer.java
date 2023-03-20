@@ -241,8 +241,8 @@ public interface IFileServer {
 		}
 
 		@Override
-		public void move(String fileSource, String fileNameTarget) throws Exception {
-			ftpClient.rename(fileSource, fileNameTarget);
+		public void move(String absFileNameSource, String absFileNameTarget) throws Exception {
+			ftpClient.rename(absFileNameSource, absFileNameTarget);
 		}
 
 		@Override

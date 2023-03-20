@@ -13,8 +13,13 @@ import com.google.gson.JsonObject;
 
 public class Item {
 	public String workspace;
-	public int session;
+	public long session;
 	public String name;
+	public String description;
+	public String folder;
+	public String folderArchive;
+	public String fileName;
+	public String fileNameArchive;
 	public Timestamp created;
 	public Timestamp modified;
 	public int retryQuota;
@@ -24,6 +29,16 @@ public class Item {
 	public Timestamp timeLatestRetry;
 	public String status;
 	public String fnCallback;
+	
+	public enum Status {
+		CREATED,
+		QUEUED,
+		ERROR_ENQUEUE,
+		DEQUEUED,
+		EXECUTING,
+		WAIT_FOR_RETRY,
+		FAILED,
+	}
 	
 	public static final String wordStatus = "status"; // TODO: modify this after DB field change
 	public static final String wordStatusOperation = "ilike"; // TODO: modify this after DB field change
