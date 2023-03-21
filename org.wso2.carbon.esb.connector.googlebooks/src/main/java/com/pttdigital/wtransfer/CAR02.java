@@ -58,6 +58,8 @@ public class CAR02 {
 			Schedule shedule = (Schedule) DB.parse(Schedule.class, ei1.getAsJsonObject());
 			ret.put(shedule.name, shedule);
 		}
+		
+		System.out.println("---> " + ZWorker.WTRANSFER_API_ENDPOINT + "/schedules?available=true");
 		return ret;
 	}
 	
@@ -67,7 +69,7 @@ public class CAR02 {
 		JsonElement e = Client.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/schedules/update-checkpoint", "post", null, null);
 		JsonArray arr = e.getAsJsonObject().get("list").getAsJsonArray();
 		
-		if (allSchedules.size() != arr.size()) { throw new Exception("Unexpected exception. \"arr1.size() != arr.size()\". ["+allSchedules.size()+" != "+arr.size()+"]"); }
+		if (allSchedules.size() != arr.size()) { throw new Exception("Unexpected exception. \"allSchedules.size() != arr.size()\". ["+allSchedules.size()+" != "+arr.size()+"]"); }
 
 		ArrayList<Schedule> triggered = new ArrayList<Schedule>();
 		for (JsonElement ei : arr) {
@@ -148,11 +150,27 @@ public class CAR02 {
 		}
 	}
 	
-	private static ArrayList<Item> getNewlyCreatedItems(HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites) {
+	private static Object map_server_locker = new Object();
+	private static HashMap<String, IFileServer.FileServer> map_server_map = new HashMap<String, IFileServer.FileServer>();
+	
+	private static void map_server_clear() {
+		synchronized (map_server_locker) {
+			map_server_map.clear();
+		}
+	}
+	
+	private static void map_server_add(String siteName, IFileServer.FileServer server) {
+		synchronized (map_server_locker) {
+			map_server_map.put(siteName, server);
+		}
+	}
+	
+	private static ArrayList<Item> getNewlyCreatedItems(HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites) { // TODO
 
 		ArrayList<Item> itemsToCreated = new ArrayList<Item>();
 		
-		HashMap<String, IFileServer.FileServer> mapServers = new HashMap<String, IFileServer.FileServer>();
+		//HashMap<String, IFileServer.FileServer> mapServers = new HashMap<String, IFileServer.FileServer>();
+		map_server_clear();
 		
 		try {
 			
@@ -160,12 +178,54 @@ public class CAR02 {
 			time_now = new Timestamp(Calendar.getInstance().getTimeInMillis());
 			
 			// triggered schedules
-			ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules); // getAllSchedules is just for test
+			ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules);
 			
-			// list items affected by those schedules
-			HashMap<String, ArrayList<Item.Info>> mapScheduleInfo = new HashMap<String, ArrayList<Item.Info>>();
+			// tmp ----------------------- tmp
+			triggered.clear(); Set<String> ksrt = allSchedules.keySet(); for (String s : ksrt) { triggered.add(allSchedules.get(s)); }
+			
+			
+			System.out.println("triggeredSchedules: " + triggered.size());
+			
+			// ------------------------------------------------------------------------------------------------------------------------------------ //
+			
+			// try open servers concurrently
+			long t_open_start = System.currentTimeMillis();
+			ArrayList<Thread> arrThreads = new ArrayList<Thread>();
 			for (Schedule schedule : triggered) {
-				
+				String siteName = allSites.get(schedule.siteSource).name;
+				if (!map_server_map.containsKey(siteName)) {
+					final Site site = allSites.get(schedule.siteSource);
+					arrThreads.add(new Thread() {
+						@Override
+						public void run() {
+							try {
+								IFileServer.FileServer server = IFileServer.createServer(site);
+								server.open();
+								map_server_add(site.name, server);
+							} catch (Exception e) {
+								e.printStackTrace();
+								map_server_add(site.name, null);
+							}
+						}
+					});
+				}
+			}
+			
+			for (Thread thread : arrThreads) { thread.start(); }
+			for (Thread thread : arrThreads) { thread.join(); }
+			long t_open_stop = System.currentTimeMillis();
+			Set<String> set_map_server_map = map_server_map.keySet();
+			int nNull = 0;
+			for (String s : set_map_server_map) { if (map_server_map.get(s) == null) { nNull++; } }
+			System.out.println("threads open count: " + arrThreads.size() + ", duration: " + (t_open_stop - t_open_start) + " ms, null = " + nNull + " of " + set_map_server_map.size() + ".");
+			
+			if ("".length() == 0) {
+				throw new Exception("test");
+			}
+			
+			// ------------------------------------------------------------------------------------------------------------------------------------ //
+			
+			/*for (Schedule schedule : triggered) {
 				String siteName = allSites.get(schedule.siteSource).name;
 				if (!mapServers.containsKey(siteName)) {
 					IFileServer.FileServer server = IFileServer.createServer(allSites.get(schedule.siteSource));
@@ -177,8 +237,15 @@ public class CAR02 {
 						mapServers.put(siteName, null);
 					}
 				}
+			}*/
+			
+			// list items affected by those schedules
+			HashMap<String, ArrayList<Item.Info>> mapScheduleInfo = new HashMap<String, ArrayList<Item.Info>>();
+			for (Schedule schedule : triggered) {
+
+				String siteName = allSites.get(schedule.siteSource).name;
 				
-				IFileServer.FileServer server = mapServers.get(siteName);
+				IFileServer.FileServer server = map_server_map.get(siteName);
 				if (server == null) {
 					mapScheduleInfo.put(schedule.name, null);
 				} else {
@@ -248,7 +315,7 @@ public class CAR02 {
 			System.out.println("====================================================================");
 			Set<String> ksToArchive = mapServerToArchive.keySet();
 			for (String siteName : ksToArchive) {
-				IFileServer.FileServer server = mapServers.get(siteName);
+				IFileServer.FileServer server = map_server_map.get(siteName);
 				if (server == null) {
 					
 				} else {
@@ -273,7 +340,7 @@ public class CAR02 {
 						System.out.println("    ----------------------------------------------------------------");
 						System.out.println("====================================================================");
 						
-						// TODO real archive
+						// TODO real archive concurrently
 						if (!server.directoryExists(folderArchive)) {
 							server.createDirectory(folderArchive);
 						}
@@ -288,7 +355,7 @@ public class CAR02 {
 			long sid = 560000;
 			for (Schedule schedule : triggered) {
 				
-				IFileServer.FileServer server = mapServers.get(schedule.siteSource);
+				IFileServer.FileServer server = map_server_map.get(schedule.siteSource);
 				String status = server == null ? Session.Status.ERROR.toString() : Session.Status.CREATED.toString();
 				
 				Session session = new Session();
@@ -480,10 +547,10 @@ public class CAR02 {
 		}
 		
 		// cleanup servers
-		Set<String> ks = mapServers.keySet();
+		Set<String> ks = map_server_map.keySet();
 		for (String siteName : ks) {
 			try {
-				mapServers.get(siteName).close();
+				map_server_map.get(siteName).close();
 			} catch (Exception ex) { }
 		}
 		

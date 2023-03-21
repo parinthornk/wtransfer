@@ -219,7 +219,9 @@ public class ZAPIV3 {
 						} else {
 							return ZResult.ERROR_400(new Exception("Query parameter \"available\" must be boolean."));
 						}
-						String now = "2023-03-18 10:54:00"; // TODO -> require "now" from main looping
+						
+						String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+						
 						String sql;
 						if (enabled) {
 							sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where (\"enabled\" = 'true') and ((\"validFrom\" is null) or (\"validFrom\" <= '" + now + "')) and ((\"validUntil\" is null) or (\"validUntil\" >= '" + now + "'));"; // TODO: direct wording is too risk
