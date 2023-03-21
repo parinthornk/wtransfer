@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+
 import org.wso2.carbon.esb.connector.ZConnector;
 import org.wso2.carbon.esb.connector.ZConnector.Constant;
 import org.wso2.carbon.esb.connector.ZConnector.ZResult;
@@ -450,6 +451,10 @@ public class ZAPIV3 {
 				String sql = "insert into " + Constant.SCHEMA + ".\"" + c.getSimpleName() + "\" (" + DB.concateStmtKeys(m1) + ") values (" + DB.concateStmtValues(m1) + ")" + " returning " + Translate.getNameOrId(c) + ";";
 				JsonElement e = DB.executeInsert(c, sql);
 				return ZResult.OK_200(e.toString());
+			}
+			// TODO: ----------------------------------------------------------------------------------------------------> CAR02
+			if (match(path, method, "/12c27e40-ac08-41ce-a8b7-04d3d62e0ccd, get")) {
+				return CAR02.getResult();
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> end
 		} catch (Exception ex) {

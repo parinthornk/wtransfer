@@ -1,18 +1,11 @@
 package org.wso2.carbon.esb.connector;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.synapse.MessageContext;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.ConnectException;
-import org.wso2.carbon.esb.connector.ZConnector.ZResult;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 
 import org.apache.synapse.commons.json.JsonUtil;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
@@ -115,7 +108,7 @@ public class googleBooksConnector extends AbstractConnector {
     					}
     				}
     			} catch (Exception ex) { }
-    			result = CAR03.process(path, method, query, null, bodyRaw);
+    			result = com.pttdigital.wtransfer.CAR03.process(path, method, query, null, bodyRaw);
     		} catch (Exception ex) { result = ZConnector.ZResult.ERROR_500(ex); }
     		int statusCode = result.statusCode;
     		String content = result.content;

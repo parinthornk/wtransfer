@@ -97,9 +97,9 @@ public interface IFileServer {
 				session.setPassword(password);
 			}
 			
-			session.connect();
+			session.connect(3000);
 			channel = session.openChannel("sftp");
-            channel.connect();
+            channel.connect(3000);
             sftpChannel = (ChannelSftp) channel;
 		}
 		

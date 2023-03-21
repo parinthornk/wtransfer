@@ -36,8 +36,9 @@ public class Item {
 		ERROR_ENQUEUE,
 		DEQUEUED,
 		EXECUTING,
-		WAIT_FOR_RETRY,
+		WAITING_FOR_RETRY,
 		FAILED,
+		SUCCESS,
 	}
 	
 	public static final String wordStatus = "status"; // TODO: modify this after DB field change

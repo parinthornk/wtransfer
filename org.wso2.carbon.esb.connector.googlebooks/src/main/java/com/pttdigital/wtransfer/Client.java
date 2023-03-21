@@ -4,12 +4,15 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.pttdigital.wtransfer.Item.Status;
+import com.pttdigital.wtransfer.Log.Type;
 
 public class Client {
 	public static JsonElement getJsonResponse(String url0, String method, HashMap<String, String> headers, JsonElement jsonRequest) throws Exception {
@@ -67,5 +70,20 @@ public class Client {
 		try { conn.disconnect(); } catch (Exception ex) { }
 
 		return jsonResponse;
+	}
+
+	public static void setItemStatus(Item item, Status executing) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public static void addItemLog(Item item, Type info, String string, String string2) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public static void updateOnExecuteFailed(Item item, Status status, int retryRemaining, Timestamp timeNextRetry, Timestamp timeLatestRetry) {
+		// TODO Auto-generated method stub
+		
 	}
 }

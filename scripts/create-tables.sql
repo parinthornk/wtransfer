@@ -58,6 +58,7 @@ create table "Session" (
 	"description" text,
 	"created" timestamp,
 	"modified" timestamp,
+	"remark" text,
 	"status" text
 );
 

@@ -10,6 +10,7 @@ public class Session {
 	public String description;
 	public Timestamp created;
 	public Timestamp modified;
+	public String remark;
 	public String status;
 	
 	public static final String wordStatus = "status"; // TODO: modify this after DB field change
