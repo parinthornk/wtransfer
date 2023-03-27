@@ -18,6 +18,7 @@ import com.google.gson.JsonArray;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.pttdigital.wtransfer.ImportV2.OL;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
@@ -122,7 +123,9 @@ public interface IFileServer {
 
 		@Override
 		public JsonArray listObjects(String folder) throws Exception {
+			OL.sln("doing  listObjects("+folder+")");
 			Vector<?> vFiles = sftpChannel.ls(folder);
+			OL.sln("vFiles: " + vFiles.size());
 			ArrayList<Object> arr = new ArrayList<Object>();
 			for (Object o : vFiles) {
 				LsEntry entry = (LsEntry) o;
@@ -143,7 +146,31 @@ public interface IFileServer {
 
 		@Override
 		public void createDirectory(String folder) throws SftpException {
-			sftpChannel.mkdir(folder);
+			
+			
+
+			String dir = folder;
+			while (dir.startsWith("/")) { dir = dir.substring(1, dir.length()); }
+			while (dir.endsWith("/")) { dir = dir.substring(0, dir.length() - 1); }
+			while (dir.contains("//")) { dir = dir.replace("//", "/"); }
+			String[] split = dir.split("/");
+			for (int i=0;i<split.length;i++) {
+				String full = "";
+				for (int j=0;j<=i;j++) {
+					full += "/" + split[j];
+				}
+				while (full.startsWith("/")) { full = full.substring(1, full.length()); }
+				OL.sln(full);
+				
+				if (!directoryExists(full)) {
+					sftpChannel.mkdir(full);
+				}
+			}
+			
+			/*for (int i=0;i<20;i++) {
+				sftpChannel.cd("..");
+			}*/
+			
 		}
 
 		@Override
@@ -185,6 +212,9 @@ public interface IFileServer {
 			// 5 threads configurable -> config in schedule
 			
 			ftpClient = new FTPClient();
+			
+			ftpClient.setDefaultTimeout(3000);
+			ftpClient.setConnectTimeout(3000);
 			ftpClient.connect(host, port);
 			ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 			ftpClient.enterLocalPassiveMode();
@@ -202,9 +232,33 @@ public interface IFileServer {
 
 		@Override
 		public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception {
-			if (!ftpClient.storeFile(targetFileName, inputStream)) {
-				throw new Exception("Failed to upload file \"" + targetFileName + "\" to \"" + host + "\".");
+			
+			ftpClient.changeToParentDirectory();
+			ftpClient.changeToParentDirectory();
+			ftpClient.changeToParentDirectory();
+
+			String p = targetFileName;
+			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
+			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
+			while (p.contains("//")) { p = p.replace("//", "/"); }
+			String[] split = p.split("/");
+			OL.sln("split: " + split.length);
+			for (int i=0;i<split.length - 1;i++) {
+
+				ftpClient.changeWorkingDirectory(split[i]);
+				OL.sln("ftpClient.changeWorkingDirectory("+split[i]+")");
+				
+				OL.sln(ftpClient.getReplyString());
+				
+				OL.sln("ftpClient.printWorkingDirectory(): " + ftpClient.printWorkingDirectory());
 			}
+
+			OL.sln("ftpClient.printWorkingDirectory(): " + ftpClient.printWorkingDirectory());
+			if (!ftpClient.storeFile(split[split.length - 1], inputStream)) {
+				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpClient.getReplyString());
+			}
+			
+			ftpClient.changeToParentDirectory();
 		}
 
 		@Override
@@ -237,7 +291,32 @@ public interface IFileServer {
 
 		@Override
 		public void createDirectory(String folder) throws Exception {
-			ftpClient.mkd(folder);
+
+			//ftpClient.changeToParentDirectory();
+			//OL.sln(ftpClient.getReplyString());
+			
+			String p = folder;
+			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
+			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
+			while (p.contains("//")) { p = p.replace("//", "/"); }
+			String[] split = p.split("/");
+			for (int i=0;i<split.length;i++) {
+				String dir = split[i];
+				if (!ftpClient.changeWorkingDirectory(dir)) {
+					OL.sln(ftpClient.getReplyString());
+					int mkd = ftpClient.mkd(dir);
+					
+					if (mkd > 499) {
+						throw new Exception("Error creating directory \"" + dir + "\", " + ftpClient.getReplyString());
+					}
+					
+					ftpClient.changeWorkingDirectory(dir);
+					OL.sln(ftpClient.getReplyString());
+				}
+			}
+			
+			ftpClient.changeToParentDirectory();
+			OL.sln(ftpClient.getReplyString());
 		}
 
 		@Override
@@ -265,24 +344,33 @@ public interface IFileServer {
 		public ServerFTPS(String _host, int _port, String _username, String _password) {
 			super(_host, _port, _username, _password);
 		}
-
+		
 		@Override
 		public void open() throws Exception {
-			ftpsClient = new FTPSClient();
-			System.out.println("calling ftpsClient.connect("+host+", "+port+") ...");
+			
+			// zero bytes // TODO
+			
+			// .lock
+			
+			//timeout();// TODO
+			
+			// maximum file size
+			
+			// enqueue items order by ???
+			
+			// 5 threads configurable -> config in schedule
+			
+			ftpsClient = new FTPSClient(true);
+			//ftpsClient.setAuthValue("TLS");
+			ftpsClient.setDefaultTimeout(3000);
+			ftpsClient.setConnectTimeout(3000);
 			ftpsClient.connect(host, port);
 			ftpsClient.setFileType(FTP.BINARY_FILE_TYPE);
 			ftpsClient.enterLocalPassiveMode();
-			
-			//for_control_and_data_connection();// ???? TODO
-			
-			//anounymous(); // TODO
-			
-			System.out.println("calling ftpsClient.login("+username+", "+password+") ...");
 			if (ftpsClient.login(username, password)) {
 				
 			} else {
-				throw new Exception("Failed to login FTPSClient, host[" + host + "], port[" + port + "], username[" + username + "], password[" + password + "].");
+				throw new Exception("Failed to login ftpsClient, host[" + host + "], port[" + port + "], username[" + username + "], password[" + password + "].");
 			}
 		}
 
@@ -293,9 +381,33 @@ public interface IFileServer {
 
 		@Override
 		public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception {
-			if (!ftpsClient.storeFile(targetFileName, inputStream)) {
-				throw new Exception("Failed to upload file \"" + targetFileName + "\" to \"" + host + "\".");
+			
+			ftpsClient.changeToParentDirectory();
+			ftpsClient.changeToParentDirectory();
+			ftpsClient.changeToParentDirectory();
+
+			String p = targetFileName;
+			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
+			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
+			while (p.contains("//")) { p = p.replace("//", "/"); }
+			String[] split = p.split("/");
+			OL.sln("split: " + split.length);
+			for (int i=0;i<split.length - 1;i++) {
+
+				ftpsClient.changeWorkingDirectory(split[i]);
+				OL.sln("ftpsClient.changeWorkingDirectory("+split[i]+")");
+				
+				OL.sln(ftpsClient.getReplyString());
+				
+				OL.sln("ftpsClient.printWorkingDirectory(): " + ftpsClient.printWorkingDirectory());
 			}
+
+			OL.sln("ftpsClient.printWorkingDirectory(): " + ftpsClient.printWorkingDirectory());
+			if (!ftpsClient.storeFile(split[split.length - 1], inputStream)) {
+				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpsClient.getReplyString());
+			}
+			
+			ftpsClient.changeToParentDirectory();
 		}
 
 		@Override
@@ -309,7 +421,7 @@ public interface IFileServer {
 			ArrayList<Object> arr = new ArrayList<Object>();
 			FTPFile[] fs = ftpsClient.listFiles();
 			for (FTPFile f : fs) {
-				Item.Info info = new Item.Info(f.getName(), f.getSize(), f.isDirectory(), new Timestamp(f.getTimestamp().getTimeInMillis() + 7 * 3600 * 1000));
+				Item.Info info = new Item.Info(f.getName(), f.getSize(), f.isDirectory(), new Timestamp(f.getTimestamp().getTimeInMillis() + 0 * 3600 * 1000));
 				arr.add(Item.Info.toDictionary(info));
 			}
 			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
@@ -328,12 +440,37 @@ public interface IFileServer {
 
 		@Override
 		public void createDirectory(String folder) throws Exception {
-			ftpsClient.mkd(folder);
+
+			//ftpsClient.changeToParentDirectory();
+			//OL.sln(ftpsClient.getReplyString());
+			
+			String p = folder;
+			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
+			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
+			while (p.contains("//")) { p = p.replace("//", "/"); }
+			String[] split = p.split("/");
+			for (int i=0;i<split.length;i++) {
+				String dir = split[i];
+				if (!ftpsClient.changeWorkingDirectory(dir)) {
+					OL.sln(ftpsClient.getReplyString());
+					int mkd = ftpsClient.mkd(dir);
+					
+					if (mkd > 499) {
+						throw new Exception("Error creating directory \"" + dir + "\", " + ftpsClient.getReplyString());
+					}
+					
+					ftpsClient.changeWorkingDirectory(dir);
+					OL.sln(ftpsClient.getReplyString());
+				}
+			}
+			
+			ftpsClient.changeToParentDirectory();
+			OL.sln(ftpsClient.getReplyString());
 		}
 
 		@Override
-		public void move(String fileSource, String fileNameTarget) throws Exception {
-			ftpsClient.rename(fileSource, fileNameTarget);
+		public void move(String absFileNameSource, String absFileNameTarget) throws Exception {
+			ftpsClient.rename(absFileNameSource, absFileNameTarget);
 		}
 
 		@Override

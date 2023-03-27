@@ -46,6 +46,8 @@ public class ZConnector {
 		public static final String Q_USERNAME = "guest";
 		public static final String Q_PASSWORD = "guest";
 		
+		public static final String WTRANSFER_API_ENDPOINT = "http://localhost:8290/wtransfer";
+		
 		public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss";
 		
 		public static final long MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;

@@ -36,7 +36,6 @@ import com.jcraft.jsch.Session;
 public class ZWorker {
 	
 	// http://10.224.143.44:8290/services
-	public static String WTRANSFER_API_ENDPOINT = "http://localhost:8290/wtransfer";
 	
 	public enum TaskStatus {
 		PENDING,
@@ -191,7 +190,7 @@ public class ZWorker {
 		HttpURLConnection conn = null;
         BufferedReader br = null;
 		try {
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces");
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces");
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("get".toUpperCase());
@@ -225,7 +224,7 @@ public class ZWorker {
 		HttpURLConnection conn = null;
         BufferedReader br = null;
 		try {
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/tasks");
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/tasks");
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("get".toUpperCase());
@@ -267,7 +266,7 @@ public class ZWorker {
 		OutputStream os = null;
         BufferedReader br = null;
 		try {
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/tasks/" + taskId + "/status");
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/tasks/" + taskId + "/status");
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("post".toUpperCase());
@@ -317,7 +316,7 @@ public class ZWorker {
 			String workspace = task.getAsJsonObject().get("workspace").getAsString();
 			String config = task.getAsJsonObject().get("config").getAsString();
 			
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/configs/" + config);
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/configs/" + config);
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("get".toUpperCase());
@@ -354,7 +353,7 @@ public class ZWorker {
 			String workspace = task.getAsJsonObject().get("workspace").getAsString();
 			String pgp = task.getAsJsonObject().get("pgp").getAsString();
 			
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/pgps/" + pgp);
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/pgps/" + pgp);
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("get".toUpperCase());
@@ -387,7 +386,7 @@ public class ZWorker {
 		HttpURLConnection conn = null;
         BufferedReader br = null;
 		try {
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/sites/" + siteName);
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/sites/" + siteName);
 			//System.out.println(url);
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
@@ -422,7 +421,7 @@ public class ZWorker {
 			String workspace = task.getAsJsonObject().get("workspace").getAsString();
 			String siteName = task.getAsJsonObject().get(scrVsTarget).getAsString();
 			
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/sites/" + siteName);
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/sites/" + siteName);
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("get".toUpperCase());
@@ -456,7 +455,7 @@ public class ZWorker {
 		OutputStream os = null;
         BufferedReader br = null;
 		try {
-			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/logs");
+			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/logs");
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("post".toUpperCase());
@@ -998,7 +997,7 @@ public class ZWorker {
         
         for (String workspace : workspaces) {
             try {
-    			url = new java.net.URL(WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/schedules");
+    			url = new java.net.URL(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + workspace + "/schedules");
     			conn = (HttpURLConnection) url.openConnection();
     			conn.setDoOutput(true);
     			conn.setRequestMethod("get".toUpperCase());

@@ -109,6 +109,9 @@ public class ZAPIV3 {
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Site
 			c = Site.class;
+			if (match(path, method, "/sites-reachability, get")) {
+				return Site.getReachability();
+			}
 			if (match(path, method, "/sites, get")) {
 				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\";";
 				JsonElement e = DB.executeList(sql);
@@ -134,20 +137,16 @@ public class ZAPIV3 {
 				return ZResult.OK_200(e.toString());
 			}
 			if (match(path, method, "/workspaces/*/sites/*/objects, get")) {
-
+				
+				// abs path
 				String absolutePath = "/";
 				if (query == null) {
-					//return ZResult.ERROR_400(new Exception("Query parameter: \"filePath\" is required."));
 				} else if (!query.containsKey("path")) {
-					//return ZResult.ERROR_400(new Exception("Query parameter: \"filePath\" is required."));
 				} else {
 					absolutePath = query.get("path");
-					while (absolutePath.startsWith("/")) {
-						absolutePath = absolutePath.substring(1, absolutePath.length());
-					}
+					while (absolutePath.startsWith("/")) { absolutePath = absolutePath.substring(1, absolutePath.length()); }
 					absolutePath = "/" + absolutePath;
 				}
-				
 				while (absolutePath.contains("%20")) { absolutePath = absolutePath.replace("%20", " "); }
 				
 				String workspace = getFromPathParamsAsString(path, 1);
@@ -172,26 +171,44 @@ public class ZAPIV3 {
 					if (server != null) { server.close(); }
 					throw ex;
 				}
-				
 			}
 			
-			/*
-		IFileServer.FileServer server = null;
-		try {
-			JsonElement json = ZWorker.getSiteByName(workspace, siteName);
-			Site site = Site.parse(json);
-			server = IFileServer.createServer(site);
-			server.open();
-			JsonArray array = server.listObjects();
-			if (server != null) { server.close(); }
-			ZResult result = new ZResult();
-			result.statusCode = 200;
-			result.content = "{\"objects\": " + array + "}";
-			return result;
-		} catch (Exception ex) {
-			if (server != null) { server.close(); }
-			throw ex;
-		}*/
+			if (match(path, method, "/workspaces/*/sites/*/objects, post")) {
+				
+				// abs path
+				String absolutePath = "/";
+				if (query == null) {
+				} else if (!query.containsKey("path")) {
+				} else {
+					absolutePath = query.get("path");
+					while (absolutePath.startsWith("/")) { absolutePath = absolutePath.substring(1, absolutePath.length()); }
+					absolutePath = "/" + absolutePath;
+				}
+				while (absolutePath.contains("%20")) { absolutePath = absolutePath.replace("%20", " "); }
+				
+				String workspace = getFromPathParamsAsString(path, 1);
+				String site = getFromPathParamsAsString(path, 3);
+				String sql = DB.sqlGetInWorkspace(c, site, workspace);
+				JsonElement e = DB.executeGet(sql);
+				
+				IFileServer server = null;
+				try {
+					Site s = (Site) DB.parse(Site.class, e.getAsJsonObject());
+					server = IFileServer.createServer(s);
+					server.open();
+					
+					System.out.println("server.createDirectory(" + absolutePath + ");");
+					server.createDirectory(absolutePath);
+					if (server != null) { server.close(); }
+					ZResult result = new ZResult();
+					result.statusCode = 201;
+					result.content = "";
+					return result;
+				} catch (Exception ex) {
+					if (server != null) { server.close(); }
+					throw ex;
+				}
+			}
 			
 			if (match(path, method, "/workspaces/*/sites/*, patch")) {
 				String workspace = getFromPathParamsAsString(path, 1);
@@ -240,6 +257,10 @@ public class ZAPIV3 {
 				String sql = DB.sqlListInWorkspace(c, workspace);
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
+			}
+			if (match(path, method, "/schedules/*/patching, post")) {
+				String schedule = getFromPathParamsAsString(path, 1);
+				return process("/schedules/" + schedule, "patch", query, header, bodyRaw);
 			}
 			if (match(path, method, "/schedules/update-checkpoint, post")) {
 				String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(new Timestamp(Calendar.getInstance().getTimeInMillis())); // TODO

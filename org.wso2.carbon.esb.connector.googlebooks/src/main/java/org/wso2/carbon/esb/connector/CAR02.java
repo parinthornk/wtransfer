@@ -23,17 +23,17 @@ import com.google.gson.JsonObject;
 public class CAR02 {
 	
 	private static JsonArray listSites() throws Exception {
-		JsonElement jsonSites = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/sites", "get", null, null);
+		JsonElement jsonSites = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/sites", "get", null, null);
 		return jsonSites.getAsJsonObject().get("list").getAsJsonArray();
 	}
 	
 	private static JsonArray listPGPs() throws Exception {
-		JsonElement jsonPGPs = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/pgps", "get", null, null);
+		JsonElement jsonPGPs = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/pgps", "get", null, null);
 		return jsonPGPs.getAsJsonObject().get("list").getAsJsonArray();
 	}
 	
 	private static JsonArray listConfigs() throws Exception {
-		JsonElement jsonConfigs = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/configs", "get", null, null);
+		JsonElement jsonConfigs = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/configs", "get", null, null);
 		return jsonConfigs.getAsJsonObject().get("list").getAsJsonArray();
 	}
 	
@@ -188,12 +188,12 @@ public class CAR02 {
 			try {
 				
 				// view transfer config
-				JsonElement jsonConfig = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/configs/" + task.config, "get", null, null);
+				JsonElement jsonConfig = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/configs/" + task.config, "get", null, null);
 				Config config = Config.parse(jsonConfig);
 				
 				// list new items to be initiated
 				ArrayList<String> itemsNew = new ArrayList<String>(); 
-				JsonElement jsonItems = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/sites/" + task.source + "/objects", "get", null, null);
+				JsonElement jsonItems = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/sites/" + task.source + "/objects", "get", null, null);
 				JsonArray items = jsonItems.getAsJsonObject().get("objects").getAsJsonArray();
 				ArrayList<Item.Info> infos = new ArrayList<Item.Info>();
 				for (JsonElement item : items) { infos.add(Item.Info.parse(item)); }
@@ -217,7 +217,7 @@ public class CAR02 {
 					
 					JsonElement jsonItem = Item.toJsonElement(x);
 					
-					ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/tasks/" + task.id + "/items", "post", null, jsonItem);
+					ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/tasks/" + task.id + "/items", "post", null, jsonItem);
 					
 				}
 				
@@ -259,7 +259,7 @@ public class CAR02 {
 		// ------------------------------------------------------------------------------------------------------------------------ //
 		
 		// list items created
-		JsonElement jsonCreated = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/items?status=created", "get", null, null);
+		JsonElement jsonCreated = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/items?status=created", "get", null, null);
 		JsonArray arrCreated = jsonCreated.getAsJsonObject().get("list").getAsJsonArray();
 		System.out.println("items in status created: " + arrCreated.size());
 		for (JsonElement e : arrCreated) {
@@ -273,7 +273,7 @@ public class CAR02 {
 		
 		
 		// list items retry: TODO
-		JsonElement jsonRetry = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/items?status=waiting_for_retry", "get", null, null);
+		JsonElement jsonRetry = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/items?status=waiting_for_retry", "get", null, null);
 		JsonArray arrRetry = jsonRetry.getAsJsonObject().get("list").getAsJsonArray();
 		System.out.println("items in status retrying: " + arrRetry.size());
 		for (JsonElement e : arrRetry) {
@@ -306,7 +306,7 @@ public class CAR02 {
 	
 	private static ArrayList<Task> listPendingTasks() throws Exception {
 		ArrayList<Task> ret = new ArrayList<Task>();
-		JsonElement jsonTasks = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/tasks?status=pending", "get", null, null);
+		JsonElement jsonTasks = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/tasks?status=pending", "get", null, null);
 		JsonArray arr = jsonTasks.getAsJsonObject().get("list").getAsJsonArray();
 		for (JsonElement e : arr) {
 			Task task = Task.parse(e);
@@ -344,7 +344,7 @@ public class CAR02 {
 					
 					JsonElement jsonTask = Task.toJsonElement(x);
 					
-					ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + schedule.workspace + "/tasks", "post", null, jsonTask);
+					ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + schedule.workspace + "/tasks", "post", null, jsonTask);
 					
 					System.out.println("triggered: " + schedule.name);
 				}
@@ -360,7 +360,7 @@ public class CAR02 {
 
 	private static ArrayList<Schedule> listAllEnabledSchedule() throws Exception{
 		ArrayList<Schedule> schedules = new ArrayList<Schedule>();
-		JsonElement jsonSchedules = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/enabled-schedules", "get", null, null);
+		JsonElement jsonSchedules = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/enabled-schedules", "get", null, null);
 		
 		// plan, stringify
 		JsonArray arr = jsonSchedules.getAsJsonObject().get("list").getAsJsonArray();
@@ -402,7 +402,7 @@ public class CAR02 {
 	//}
 	
 	private static Workspace[] listWorkspaces() throws Exception {
-		JsonElement jsonWorkspaces = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces", "get", null, null);
+		JsonElement jsonWorkspaces = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces", "get", null, null);
 		Workspace[] workspaces = Workspace.parse(jsonWorkspaces.getAsJsonObject().get("list").getAsJsonArray());
 		System.out.println("workspaces: " + workspaces.length);
 		return workspaces;
@@ -502,7 +502,7 @@ public class CAR02 {
 			for (String s : al) {
 				try {
 					String[] sp = s.split(sep);
-					JsonElement jsonTask = ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + sp[0] + "/tasks/" + sp[1], "get", null, null);
+					JsonElement jsonTask = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + sp[0] + "/tasks/" + sp[1], "get", null, null);
 					distinctTasks.add(jsonTask);
 				} catch (Exception e) {
 					e.printStackTrace();

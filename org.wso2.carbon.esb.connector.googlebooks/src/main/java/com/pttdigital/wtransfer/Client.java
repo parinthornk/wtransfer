@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,7 +16,28 @@ import com.pttdigital.wtransfer.Item.Status;
 import com.pttdigital.wtransfer.Log.Type;
 
 public class Client {
+	
+	private static ArrayList<String> al_methods = new ArrayList<String>();
+	
 	public static JsonElement getJsonResponse(String url0, String method, HashMap<String, String> headers, JsonElement jsonRequest) throws Exception {
+		
+		if (al_methods.size() == 0) {
+			al_methods.add("get");
+			al_methods.add("post");
+			al_methods.add("put");
+			al_methods.add("patch");
+			al_methods.add("delete");
+			al_methods.add("options");
+		}
+		
+		if (method == null) {
+			throw new Exception("Unable to construct a HTTP request with method = \"null\".");
+		}
+		
+		if (!al_methods.contains(method.toLowerCase())) {
+			throw new Exception("Unable to construct a HTTP request with method = \"" + method + "\", the method is not yet implemented.");
+		}
+		
 		JsonElement jsonResponse = null;
 		HttpURLConnection conn = null;
         BufferedReader reader = null;

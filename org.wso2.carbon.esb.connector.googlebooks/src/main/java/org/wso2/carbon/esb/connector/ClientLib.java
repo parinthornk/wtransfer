@@ -18,7 +18,7 @@ public class ClientLib {
 			try {
 				String patch = "{\"status\": \"" + status.toString() + "\"}"; // TODO
 				JsonElement e = new Gson().fromJson(patch, JsonElement.class);
-				ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/patch-status", "post", null, e);
+				ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/patch-status", "post", null, e);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -32,13 +32,13 @@ public class ClientLib {
 		m.put("timeNextRetry", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(timeNextRetry));
 		m.put("timeLatestRetry", new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(timeLatestRetry));
 		JsonElement e = new Gson().fromJson(ZConnector.ConvertToJsonString(m), JsonElement.class);
-		ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/patch-status", "post", null, e);
+		ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/patch-status", "post", null, e);
 	}
 	
 	public static void setTaskStatus(Task task, Task.Status status) throws Exception {
 		String patch = "{\"status\": \"" + status.toString() + "\"}"; // TODO
 		JsonElement e = new Gson().fromJson(patch, JsonElement.class);
-		ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/tasks/" + task.id + "/patch-status", "post", null, e);
+		ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + task.workspace + "/tasks/" + task.id + "/patch-status", "post", null, e);
 	}
 	
 	public static void addItemLog(Item item, Log.Type type, String title, String body) {
@@ -49,7 +49,7 @@ public class ClientLib {
 				m.put("title", title);
 				m.put("body", body);
 				JsonElement e = new Gson().fromJson(ZConnector.ConvertToJsonString(m), JsonElement.class);
-				ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", "post", null, e);
+				ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", "post", null, e);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -62,6 +62,6 @@ public class ClientLib {
 	}
 
 	public static void updateScheduleCheckpoint(Schedule schedule, Timestamp time) throws JsonSyntaxException, Exception {
-		ClientLib.getJsonResponse(ZWorker.WTRANSFER_API_ENDPOINT + "/workspaces/" + schedule.workspace + "/schedules/" + schedule.name + "/patch-checkpoint", "post", null, new Gson().fromJson("{\"previousCheckpoint\": \"" + time + "\"}", JsonElement.class));
+		ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + schedule.workspace + "/schedules/" + schedule.name + "/patch-checkpoint", "post", null, new Gson().fromJson("{\"previousCheckpoint\": \"" + time + "\"}", JsonElement.class));
 	}
 }

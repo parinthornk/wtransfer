@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.pttdigital.wtransfer.ImportV2.OL;
 
 public class Schedule {
 	public String siteSource;
