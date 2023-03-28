@@ -10,8 +10,11 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.wso2.carbon.esb.connector.ZConnector;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.pttdigital.wtransfer.Item.Status;
 import com.pttdigital.wtransfer.Log.Type;
 
@@ -94,14 +97,28 @@ public class Client {
 		return jsonResponse;
 	}
 
-	public static void setItemStatus(Item item, Status executing) {
-		// TODO Auto-generated method stub
-		
+	public static void setItemStatus(Item item, Status status) {
+		try {
+			JsonObject o = new JsonObject();
+			o.addProperty(Item.wordStatus, status.toString().toUpperCase());
+			getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/sessions/" + item.session + "/items/" + item.name + "/patch", "post", null, o);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
-	public static void addItemLog(Item item, Type info, String string, String string2) {
-		// TODO Auto-generated method stub
-		
+	public static void addItemLog(Item item, Log.Type t, String title, String body) {
+		try {
+			LogItem log = new LogItem();
+			log.id = 0;
+			log.item = item.name;
+			log.logType = t.toString().toUpperCase();
+			log.title = title;
+			log.body = body;
+			getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", "post", null, new Gson().fromJson(DB.toJsonString(log), JsonObject.class));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void updateOnExecuteFailed(Item item, Status status, int retryRemaining, Timestamp timeNextRetry, Timestamp timeLatestRetry) {

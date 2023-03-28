@@ -98,9 +98,9 @@ public interface IFileServer {
 				session.setPassword(password);
 			}
 			
-			session.connect(3000);
+			session.connect(25000);
 			channel = session.openChannel("sftp");
-            channel.connect(3000);
+            channel.connect(25000);
             sftpChannel = (ChannelSftp) channel;
 		}
 		
@@ -147,9 +147,24 @@ public interface IFileServer {
 		@Override
 		public void createDirectory(String folder) throws SftpException {
 			
+			System.out.println("Creating Directory...");
+            String[] complPath = folder.split("/");
+            sftpChannel.cd("/");
+            for (String dir : complPath) {
+                if (dir.length() > 0) {
+                    try {
+                        System.out.println("Current Dir : " + sftpChannel.pwd());
+                        sftpChannel.cd(dir);
+                    } catch (SftpException e2) {
+                    	sftpChannel.mkdir(dir);
+                    	sftpChannel.cd(dir);
+                    }
+                }
+            }
+            sftpChannel.cd("/");
 			
 
-			String dir = folder;
+			/*String dir = folder;
 			while (dir.startsWith("/")) { dir = dir.substring(1, dir.length()); }
 			while (dir.endsWith("/")) { dir = dir.substring(0, dir.length() - 1); }
 			while (dir.contains("//")) { dir = dir.replace("//", "/"); }
@@ -160,21 +175,19 @@ public interface IFileServer {
 					full += "/" + split[j];
 				}
 				while (full.startsWith("/")) { full = full.substring(1, full.length()); }
-				OL.sln(full);
-				
-				if (!directoryExists(full)) {
+				boolean b = directoryExists(full);
+				OL.sln("b: " + b + ", " + full);
+				if (!b) {
 					sftpChannel.mkdir(full);
+					OL.sln("sftpChannel.mkdir("+full+");");
 				}
-			}
-			
-			/*for (int i=0;i<20;i++) {
-				sftpChannel.cd("..");
 			}*/
 			
 		}
 
 		@Override
 		public void move(String absFileNameSource, String absFileNameTarget) throws SftpException {
+			OL.sln("sftpChannel.rename("+absFileNameSource+", "+absFileNameTarget+");");
 			sftpChannel.rename(absFileNameSource, absFileNameTarget);
 		}
 
@@ -213,8 +226,8 @@ public interface IFileServer {
 			
 			ftpClient = new FTPClient();
 			
-			ftpClient.setDefaultTimeout(3000);
-			ftpClient.setConnectTimeout(3000);
+			ftpClient.setDefaultTimeout(25000);
+			ftpClient.setConnectTimeout(25000);
 			ftpClient.connect(host, port);
 			ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 			ftpClient.enterLocalPassiveMode();

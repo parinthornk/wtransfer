@@ -448,6 +448,12 @@ public class ZAPIV3 {
 				JsonElement e = DB.executeUpdate(sql, c.getSimpleName(), item);
 				return ZResult.OK_200(e.toString());
 			}
+			if (match(path, method, "/workspaces/*/sessions/*/items/*/patch, post")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				String session = getFromPathParamsAsString(path, 3);
+				String item = getFromPathParamsAsString(path, 5);
+				return process("/workspaces/" + workspace + "/sessions/" + session + "/items/" + item, "patch", null, null, bodyRaw);
+			}
 			if (match(path, method, "/workspaces/*/sessions/*/items/*, delete")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String session = getFromPathParamsAsString(path, 3);
