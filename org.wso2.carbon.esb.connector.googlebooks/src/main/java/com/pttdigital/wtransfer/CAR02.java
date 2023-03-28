@@ -358,6 +358,8 @@ public class CAR02 {
 						item.fileNameArchive = info.name + ".arc";
 						item.folderArchive = schedule.staticDirSource + "/archive"; // TODO
 						item.status = Item.Status.CREATED.toString();
+						item.created = time_now;
+						item.modified = time_now;
 						itemsToCreated.add(item);
 					}
 				}
