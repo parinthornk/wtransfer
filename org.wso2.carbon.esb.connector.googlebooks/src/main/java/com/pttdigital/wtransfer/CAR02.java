@@ -161,71 +161,89 @@ public class CAR02 {
 	
 	public static ZConnector.ZResult getResult() {
 		try {
+			long t0 = System.currentTimeMillis();
 			loop();
-			return ZConnector.ZResult.OK_200("{\"executed\": \"" + System.currentTimeMillis() + "\"}");
+			long t1 = System.currentTimeMillis();
+			long duration = t1 - t0;
+			return ZConnector.ZResult.OK_200("{\"executed\": " + t1 + ", \"duration\": " + duration + "}");
 		} catch (Exception ex) {
 			return ZConnector.ZResult.ERROR_500(ex);
 		}
 	}
 	
-	private static Object map_server_locker = new Object();
-	private static HashMap<String, IFileServer.FileServer> map_server_map = new HashMap<String, IFileServer.FileServer>();
-	
-	private static void map_server_clear() {
-		synchronized (map_server_locker) {
-			map_server_map.clear();
-		}
-	}
-	
-	private static void map_server_add(String siteName, IFileServer.FileServer server) {
-		synchronized (map_server_locker) {
-			map_server_map.put(siteName, server);
-			OL.sln("map_server_map.put("+siteName+", "+server+");");
-		}
-	}
+
+	private static HashMap<String, IFileServer.FileServer> mserv = new HashMap<String, IFileServer.FileServer>();
+	private static HashMap<String, Boolean> mserv_success = new HashMap<String, Boolean>();
 
 	private static void openServers(ArrayList<Schedule> triggered, HashMap<String, Site> allSites) throws Exception {
-		map_server_clear();
-		// try open servers concurrently
-		long t_open_start = System.currentTimeMillis();
-		ArrayList<Thread> arrThreads = new ArrayList<Thread>();
+		
+		
+		// servers cleanup
+		mserv.clear();
+		mserv_success.clear();
+		
+		// list sites
+		ArrayList<String> sitesDistinct = new ArrayList<String>();
 		for (Schedule schedule : triggered) {
-			String siteName = allSites.get(schedule.siteSource).name;
-			if (!map_server_map.containsKey(siteName)) {
-				final Site site = allSites.get(schedule.siteSource);
-				arrThreads.add(new Thread() {
-					@Override
-					public void run() {
-						try {
-							IFileServer.FileServer server = IFileServer.createServer(site);
-							server.open();
-							map_server_add(site.name, server);
-						} catch (Exception e) {
-							e.printStackTrace();
-							map_server_add(site.name, null);
-						}
-					}
-				});
+			if (!sitesDistinct.contains(schedule.siteSource)) {
+				sitesDistinct.add(schedule.siteSource);
 			}
 		}
 		
-		for (Thread thread : arrThreads) { thread.start(); }
-		for (Thread thread : arrThreads) { thread.join(); }
-		long t_open_stop = System.currentTimeMillis();
-		Set<String> set_map_server_map = map_server_map.keySet();
-		int nNull = 0;
-		for (String s : set_map_server_map) { if (map_server_map.get(s) == null) { nNull++; } }
-		System.out.println("threads open count: " + arrThreads.size() + ", duration: " + (t_open_stop - t_open_start) + " ms, null = " + nNull + " of " + set_map_server_map.size() + ".");
+		// create servers from sites
+		for (String siteName : sitesDistinct) {
+			try {
+				mserv.put(siteName, IFileServer.createServer(allSites.get(siteName)));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+		
+		// threads to open servers
+		Object mserv_success_locker = new Object();
+		ArrayList<Thread> ats = new ArrayList<Thread>();
+		for (String siteName : sitesDistinct) {
+			final String sn = siteName;
+			ats.add(new Thread() {
+				@Override
+				public void run() {
+					boolean success = false;
+					try {
+						IFileServer.FileServer sv = null;
+						synchronized (mserv_success_locker) {
+							try {
+								sv = mserv.get(sn);
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
+						}
+						sv.open();
+						success = true;
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+					synchronized (mserv_success_locker) {
+						mserv_success.put(sn, success);
+						OL.sln("mserv_success.put("+sn+", "+success+");");
+					}
+				}
+			});
+		}
+		
+		// open servers concurrently
+		for (Thread th : ats) { th.start(); }
+		for (Thread th : ats) { th.join(); }
 	}
 
 	private static void closeServers() {
-		Set<String> ks = map_server_map.keySet();
+		Set<String> ks = mserv.keySet();
 		for (String siteName : ks) {
 			try {
-				map_server_map.get(siteName).close();
+				mserv.get(siteName).close();
 			} catch (Exception ex) { ex.printStackTrace(); }
 		}
-		map_server_map.clear();
+		mserv.clear();
+		mserv_success.clear();
 	}
 	
 	private static ArrayList<Item> getNewlyCreatedItems(HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites, ArrayList<Schedule> triggered, HashMap<Long, Session> sessionsToCreated) { // TODO
@@ -240,13 +258,15 @@ public class CAR02 {
 
 				String siteName = allSites.get(schedule.siteSource).name;
 				
-				IFileServer.FileServer server = map_server_map.get(siteName);
-				if (server == null) {
+				//IFileServer.FileServer server = map_server_map.get(siteName);
+				
+				boolean server_success = mserv_success.get(siteName);
+				if (!server_success) {
 					mapScheduleInfo.put(schedule.name, null);
 				} else {
 
 					ArrayList<Item.Info> infos = new ArrayList<Item.Info>();
-					JsonArray arr = server.listObjects(schedule.staticDirSource);
+					JsonArray arr = mserv.get(siteName).listObjects(schedule.staticDirSource);
 					for (JsonElement e : arr) {
 						Item.Info info = Item.Info.parse(e);
 						if (info.isDirectory) {
@@ -271,6 +291,9 @@ public class CAR02 {
 						
 						infos.add(info);
 					}
+					
+					OL.sln("schedule[" + schedule.name + "], infos: " + infos.size());
+					
 					mapScheduleInfo.put(schedule.name, infos);
 				}
 			}
@@ -300,10 +323,12 @@ public class CAR02 {
 			
 			Set<String> ksToArchive = mapServerToArchive.keySet();
 			for (String siteName : ksToArchive) {
-				IFileServer.FileServer server = map_server_map.get(siteName);
-				if (server == null) {
+
+				boolean server_success = mserv_success.get(siteName);
+				if (!server_success) {
 					
 				} else {
+					IFileServer.FileServer server = mserv.get(siteName);
 					ArrayList<String> a = mapServerToArchive.get(siteName);
 					for (String text : a) {
 						
@@ -479,50 +504,42 @@ public class CAR02 {
 		
 		
 		
-		
-		
 
 		ArrayList<Schedule> al_sch = new ArrayList<Schedule>();
+		
 		JsonElement e = Client.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/default/schedules", "get", null, null);
+		
+		
+		
 		JsonArray array = e.getAsJsonObject().get("list").getAsJsonArray();
 		for (JsonElement ei : array) {
 			Schedule schedule = (Schedule) DB.parse(Schedule.class, ei.getAsJsonObject());
 			al_sch.add(schedule);
 		}
+		OL.sln(al_sch.size());
 		
 		for (Schedule s : al_sch) {
 			
 			if (!s.name.startsWith("out-")) {
 				continue;
 			}
-			
+
 			JsonObject o = new JsonObject();
+			//o.addProperty("plan", "*-*-* *:00:00,*-*-* *:05:00,*-*-* *:10:00,*-*-* *:15:00,*-*-* *:20:00,*-*-* *:25:00,*-*-* *:30:00,*-*-* *:35:00,*-*-* *:40:00,*-*-* *:45:00,*-*-* *:50:00,*-*-* *:55:00");
+			//o.addProperty("enabled", true);
 			
-			String old = s.staticDirSource;
+			o.addProperty("fnIsFileToMove", "function(x){return x.endsWith(\".xlsx\");}");
 			
 			
-			if (old.startsWith("/OREO/")) {
-				continue;
+			JsonElement e3 = Client.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/default/schedules/" + s.name + "/patching", "post", null, o);
+			OL.sln(e3.toString());
+			
+			if ("".length() == 0) {
+				//return;
 			}
 			
-			String newDirName = old;
-			
-			//newDirName = newDirName.replace("/WSO2_TEST", "");
-			
-			newDirName = "/OREO/" + newDirName;
-			
-			while (newDirName.startsWith("/")) { newDirName = newDirName.substring(1, newDirName.length()); }
-			while (newDirName.endsWith("/")) { newDirName = newDirName.substring(0, newDirName.length() - 1); }
-			while (newDirName.contains("//")) { newDirName = newDirName.replace("//", "/"); }
-			newDirName = "/" + newDirName;
-			
-			o.addProperty("staticDirSource", newDirName);
-			//o.addProperty("staticDirTarget", old);
-			
-			//o.addProperty("enabled", false);
-			
-			ZResult r = ZAPIV3.process("/workspaces/default/schedules/" + s.name, "patch", null, null, o.toString());
-			OL.sln(r.content);
+			//ZResult r = ZAPIV3.process("/workspaces/default/schedules/" + s.name, "patch", null, null, o.toString());
+			//OL.sln(r.content);
 		}
 		
 		if ("".length() == 0) {
@@ -930,7 +947,7 @@ public class CAR02 {
 		HashMap<Long, Session> sessionsToCreated = new HashMap<Long, Session>();
 		long sid = 560000;
 		for (Schedule schedule : triggered) {
-			IFileServer.FileServer server = map_server_map.get(schedule.siteSource);
+			IFileServer.FileServer server = mserv.get(schedule.siteSource);
 			String status = server == null ? Session.Status.ERROR.toString() : Session.Status.CREATED.toString();
 			Session session = new Session();
 			session.workspace = schedule.workspace;
@@ -994,7 +1011,6 @@ public class CAR02 {
 			for (JsonElement e : resSessionsArr) {
 				Session s = (Session) DB.parse(Session.class, e.getAsJsonObject());
 				mapSessionsDescription.put(s.description, s);
-				OL.sln("mapSessionsDescription.put("+s.description+", "+s+");");
 			}
 		}
 		
@@ -1010,10 +1026,14 @@ public class CAR02 {
 				for (String scheduleName : ks) {
 					ArrayList<String> list = messages.get(scheduleName);
 					for (String text : list) {
-						Queue.Publisher.enqueue(scheduleName, text);
+						try {
+							Queue.Publisher.enqueue(scheduleName, text);
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
 					}
 				}
-			} catch (Exception ex) { }
+			} catch (Exception ex) { ex.printStackTrace(); }
 			Queue.Publisher.close();
 		}
 	}
@@ -1031,6 +1051,12 @@ public class CAR02 {
 			HashMap<String, Schedule> allSchedules = mapSchedules();
 			System.out.println("allSchedules: " + allSchedules.size());
 			
+			// triggered schedules
+			ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules);
+			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("out-20001"));
+			//Set<String> ks = allSchedules.keySet(); for (String k : ks) {triggered.add(allSchedules.get(k));}
+			System.out.println("triggered: " + triggered.size());
+			
 			// all sites
 			HashMap<String, Site> allSites = mapSites();
 			System.out.println("allSites: " + allSites.size());
@@ -1038,11 +1064,6 @@ public class CAR02 {
 			/*// all existing sessions for what? // TODO, limit only previous 24 hour?
 			HashMap<Long, Session> allExistingSessions = mapSessions();
 			System.out.println("allExistingSessions: " + allExistingSessions.size());*/
-			
-			// triggered schedules
-			//ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules);
-			ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("out-20001"));
-			System.out.println("triggered: " + triggered.size());
 			
 			// open server connections concurrently
 			openServers(triggered, allSites);
@@ -1071,5 +1092,7 @@ public class CAR02 {
 		closeServers();
 		
 		System.out.println("------------------------------------------------------------------------------------");
+		
+		IFileServer.ServerSFTP.printms();
 	}
 }

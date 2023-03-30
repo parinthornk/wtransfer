@@ -258,9 +258,10 @@ public class ZAPIV3 {
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
-			if (match(path, method, "/schedules/*/patching, post")) {
-				String schedule = getFromPathParamsAsString(path, 1);
-				return process("/schedules/" + schedule, "patch", query, header, bodyRaw);
+			if (match(path, method, "/workspaces/*/schedules/*/patching, post")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				String schedule = getFromPathParamsAsString(path, 3);
+				return process("/workspaces/" + workspace + "/schedules/" + schedule, "patch", query, header, bodyRaw);
 			}
 			if (match(path, method, "/schedules/update-checkpoint, post")) {
 				String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(new Timestamp(Calendar.getInstance().getTimeInMillis())); // TODO

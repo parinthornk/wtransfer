@@ -120,12 +120,21 @@ public interface IFileServer {
 			if (channel != null) { try { channel.disconnect(); } catch (Exception ex) { } }
 			if (session != null) { try { session.disconnect(); } catch (Exception ex) { } }
 		}
+		
+		private static ArrayList<Long> ms = new ArrayList<Long>();
+		public static void printms() {
+			double sum = 0;
+			for (long l : ms) {
+				sum += l;
+			}
+			double avg = sum / ms.size();
+			OL.sln("avg: " + avg);
+		}
 
 		@Override
 		public JsonArray listObjects(String folder) throws Exception {
-			OL.sln("doing  listObjects("+folder+")");
+			long t0 = System.currentTimeMillis();
 			Vector<?> vFiles = sftpChannel.ls(folder);
-			OL.sln("vFiles: " + vFiles.size());
 			ArrayList<Object> arr = new ArrayList<Object>();
 			for (Object o : vFiles) {
 				LsEntry entry = (LsEntry) o;
@@ -133,7 +142,10 @@ public interface IFileServer {
 				Item.Info info = new Item.Info(entry.getFilename(), attrs.getSize(), attrs.isDir(), new Timestamp(Long.parseLong(attrs.getMTime() + "000")));
 				arr.add(Item.Info.toDictionary(info));
 			}
-			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
+			JsonArray ret = new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
+			long t1 = System.currentTimeMillis();
+			ms.add(t1 - t0);
+			return ret;
 		}
 
 		@Override
@@ -147,13 +159,13 @@ public interface IFileServer {
 		@Override
 		public void createDirectory(String folder) throws SftpException {
 			
-			System.out.println("Creating Directory...");
+			//System.out.println("Creating Directory...");
             String[] complPath = folder.split("/");
             sftpChannel.cd("/");
             for (String dir : complPath) {
                 if (dir.length() > 0) {
                     try {
-                        System.out.println("Current Dir : " + sftpChannel.pwd());
+                        //System.out.println("Current Dir : " + sftpChannel.pwd());
                         sftpChannel.cd(dir);
                     } catch (SftpException e2) {
                     	sftpChannel.mkdir(dir);
