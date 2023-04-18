@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -246,6 +247,7 @@ public class CAR02 {
 		mserv_success.clear();
 	}
 	
+	private static HashMap<String, String> mapFileArcName = new HashMap<String, String>();
 	private static ArrayList<Item> getNewlyCreatedItems(HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites, ArrayList<Schedule> triggered, HashMap<Long, Session> sessionsToCreated) { // TODO
 
 		ArrayList<Item> itemsToCreated = new ArrayList<Item>();
@@ -321,6 +323,7 @@ public class CAR02 {
 				}
 			}
 			
+			mapFileArcName.clear();
 			Set<String> ksToArchive = mapServerToArchive.keySet();
 			for (String siteName : ksToArchive) {
 
@@ -337,7 +340,12 @@ public class CAR02 {
 						String fileName = sep[1];
 						
 						String folderArchive = folder + "/archive"; // TODO
-						String fileNameArchive = fileName + ".arc";
+						String fileNameArchive = fileName + "." + new SimpleDateFormat("yyyyMMddHHmmss").format(time_now) + ".arc";
+						
+						// -------------------------------------------------------------------------------------------- //
+						String arc_name_key = siteName + ":" + folder + ":" + fileName;
+						mapFileArcName.put(arc_name_key, fileNameArchive);
+						// -------------------------------------------------------------------------------------------- //
 						
 						// TODO real archive concurrently
 						if (!server.directoryExists(folderArchive)) {
@@ -380,7 +388,25 @@ public class CAR02 {
 						item.description = session.description;
 						item.fileName = info.name;
 						item.folder = schedule.staticDirSource;
-						item.fileNameArchive = info.name + ".arc";
+						
+						
+						
+						
+						// how to track back to archived file name? ---> 1. site, folder, filename
+						// String arc_name_key = siteName + ":" + folder + ":" + fileName;
+						// mapFileArcName
+
+						String siteName = allSchedules.get(session.schedule).siteSource;
+						String folder = allSchedules.get(session.schedule).staticDirSource;
+						String fileName = info.name;
+						String arc_name_key = siteName + ":" + folder + ":" + fileName;
+						if (!mapFileArcName.containsKey(arc_name_key)) {
+							throw new Exception("mapFileArcName does not containt \"" + arc_name_key + "\".");
+						}
+						
+						String newArcName = mapFileArcName.get(arc_name_key);
+						
+						item.fileNameArchive = newArcName;//info.name + ".arc";
 						item.folderArchive = schedule.staticDirSource + "/archive"; // TODO
 						item.status = Item.Status.CREATED.toString();
 						item.created = time_now;
@@ -492,7 +518,9 @@ public class CAR02 {
 		
 		if ("".length() == 0) {
 
-			loop();
+			clear_db();
+			
+			//loop();
 			return;
 		}
 		
@@ -937,7 +965,7 @@ public class CAR02 {
 			server.close();
 		}*/
 	}
-	
+
 	private static HashMap<String, Session> mapSessionsDescription = new HashMap<String, Session>();
 	
 	private static HashMap<Long, Session> instantiateNewSessions(ArrayList<Schedule> triggered) throws NoSuchFieldException, Exception {
@@ -1054,7 +1082,7 @@ public class CAR02 {
 			// triggered schedules
 			ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules);
 			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("out-20001"));
-			//Set<String> ks = allSchedules.keySet(); for (String k : ks) {triggered.add(allSchedules.get(k));}
+			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); Set<String> ks = allSchedules.keySet(); for (String k : ks) {triggered.add(allSchedules.get(k));}
 			System.out.println("triggered: " + triggered.size());
 			
 			// all sites
@@ -1094,5 +1122,13 @@ public class CAR02 {
 		System.out.println("------------------------------------------------------------------------------------");
 		
 		IFileServer.ServerSFTP.printms();
+	}
+	
+	private static void clear_db() throws Exception {
+		DB.executeDeleteAll("LogItem");
+		DB.executeDeleteAll("Item");
+		DB.executeDeleteAll("Session");
+		DB.executeDeleteAll("Schedule");
+		DB.executeDeleteAll("Site");
 	}
 }

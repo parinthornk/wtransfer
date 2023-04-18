@@ -43,6 +43,7 @@ public class Site {
 				@Override
 				public void run() {
 					boolean connection_ok = false;
+					
 					try {
 						JsonElement e = Client.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/default/sites/" + name + "/objects", "get", null, null);
 						int count = e.getAsJsonObject().get("count").getAsInt();

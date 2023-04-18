@@ -214,6 +214,34 @@ public class DB {
 		}
 	}
 	
+	public static JsonElement executeDeleteAll(String tableName) throws Exception {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			
+			c = DriverManager.getConnection("jdbc:postgresql://" + Constant.HOST + ":" + Constant.PORT + "/" + Constant.DATABASE, Constant.USERNAME, Constant.PASSWORD);
+			stmt = c.createStatement();
+			
+			String sql = "delete from " + Constant.SCHEMA + ".\"" + tableName + "\";";
+			
+			System.out.println(sql);
+			int deleted = stmt.executeUpdate(sql);
+
+			HashMap<String, Object> m1 = new HashMap<String, Object>();
+			m1.put("deleted", deleted);
+
+			if (stmt != null) { try { stmt.close(); } catch (Exception e) { } }
+			if (c != null) { try { c.close(); } catch (Exception e) { } }
+			return new Gson().fromJson(ZConnector.ConvertToJsonString(m1), JsonElement.class);
+			
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			if (stmt != null) { try { stmt.close(); } catch (Exception e) { } }
+			if (c != null) { try { c.close(); } catch (Exception e) { } }
+			throw new Exception("Error executeDelete, " + ex);
+		}
+	}
+	
 	public static ArrayList<String> listAllFields() throws Exception {
 
 		JsonElement e = executeList("select distinct column_name from information_schema.columns where table_schema = '" + ZConnector.Constant.SCHEMA + "' order by column_name;");

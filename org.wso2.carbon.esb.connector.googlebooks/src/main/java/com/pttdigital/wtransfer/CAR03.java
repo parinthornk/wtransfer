@@ -115,14 +115,12 @@ public class CAR03 {
 				throw new Exception("Error while initializing source InputStream: " + ex + ". Please make sure that source file \"" + fileName + "\" is accessible in folder \"" + item.folderArchive + "\".");
 			}
 			
-			
 			/*Client.addItemLog(item, Log.Type.INFO, "connection", "Applying PGP to InputStream isource: " + isource);
 			try {
 				isource = applyPGP(pgp, isource);
 			} catch (Exception ex) {
 				throw new Exception("Error while applying PGP to source InputStream: " + ex);
 			}*/
-			
 			
 			String connTarget = "host["+target.host+"], port["+target.port+"], protocol["+target.protocol+"], username["+target.username+"], password["+target.password+"], keyPath["+target.keyPath+"]";
 			try {
@@ -134,7 +132,7 @@ public class CAR03 {
 			}
 			
 			String targetFolder = schedule.staticDirTarget;
-			String targetFileName = targetFolder + "/" + fileName.substring(0, fileName.length() - ".arc".length());
+			String targetFileName = targetFolder + "/" + item.fileName;//fileName.substring(0, fileName.length() - ".arc".length());
 			
 			/*if (pgp != null) {
 				try {

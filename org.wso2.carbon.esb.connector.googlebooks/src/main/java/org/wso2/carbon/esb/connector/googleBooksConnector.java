@@ -73,6 +73,10 @@ public class googleBooksConnector extends AbstractConnector {
     		String content = result.content;
     		context.setProperty("ftpStatusCode", statusCode);
     		context.setProperty("wresponse", content);
+    		
+    		
+    		
+    		
     	} else if (Operation.equalsIgnoreCase("quarterback")) {
 			try {
 				CAR02.car02doWork();

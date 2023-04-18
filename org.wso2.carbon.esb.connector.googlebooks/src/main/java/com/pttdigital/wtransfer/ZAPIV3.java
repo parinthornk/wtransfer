@@ -486,6 +486,16 @@ public class ZAPIV3 {
 			if (match(path, method, "/12c27e40-ac08-41ce-a8b7-04d3d62e0ccd, get")) {
 				return CAR02.getResult();
 			}
+			// TODO: ----------------------------------------------------------------------------------------------------> telnet
+			if (match(path, method, "/telnet-check, post")) {
+				JsonObject o = new Gson().fromJson(new String(bodyRaw), JsonObject.class);
+				boolean telnetStatus = TelnetCheck.getTelnet(o.get("ip").getAsString(), o.get("port").getAsInt());
+				if (telnetStatus) {
+					return ZResult.OK_200("{\"telnet-status\": \"OK\"}");
+				} else {
+					return ZResult.ERROR_500(new Exception("telnet failed"));
+				}
+			}
 			// TODO: ----------------------------------------------------------------------------------------------------> end
 		} catch (Exception ex) {
 			ex.printStackTrace();
