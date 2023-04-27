@@ -330,23 +330,23 @@ public class ZAPIV3 {
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Session
 			c = Session.class;
-			if (match(path, method, "/sessions, get")) {
+			//if (match(path, method, "/sessions, get")) {
 				
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\";";
-				String status = Session.getStatus(query); if (status != null) { if (status.length() != 0) { sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + " where \"" + Session.wordStatus + "\" " + Session.wordStatusOperation + " '" + status + "';"; } }
+			//	String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\";";
+			//	String status = Session.getStatus(query); if (status != null) { if (status.length() != 0) { sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + " where \"" + Session.wordStatus + "\" " + Session.wordStatusOperation + " '" + status + "';"; } }
 				
-				JsonElement e = DB.executeList(sql);
-				return ZResult.OK_200(e.toString());
-			}
-			if (match(path, method, "/workspaces/*/sessions, get")) {
-				String workspace = getFromPathParamsAsString(path, 1);
+			//	JsonElement e = DB.executeList(sql);
+			//	return ZResult.OK_200(e.toString());
+			//}
+			//if (match(path, method, "/workspaces/*/sessions, get")) {
+			//	String workspace = getFromPathParamsAsString(path, 1);
 				
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "';";
-				String status = Session.getStatus(query); if (status != null) { if (status.length() != 0) { sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + " where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Session.wordStatus + "\" " + Session.wordStatusOperation + " '" + status + "';"; } }
+			//	String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "';";
+			//	String status = Session.getStatus(query); if (status != null) { if (status.length() != 0) { sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + " where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Session.wordStatus + "\" " + Session.wordStatusOperation + " '" + status + "';"; } }
 				
-				JsonElement e = DB.executeList(sql);
-				return ZResult.OK_200(e.toString());
-			}
+			//	JsonElement e = DB.executeList(sql);
+			//	return ZResult.OK_200(e.toString());
+			//}
 			if (match(path, method, "/workspaces/*/sessions/*, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String sessions = getFromPathParamsAsString(path, 3);
@@ -400,21 +400,21 @@ public class ZAPIV3 {
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Item
 			c = Item.class;
-			if (match(path, method, "/items, get")) {
-				String status = Item.getStatus(query);
+			//if (match(path, method, "/items, get")) {
+			//	String status = Item.getStatus(query);
 				
-				if (status != null) {
-					if (status.length() != 0) {
-						String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + " where \"" + Item.wordStatus + "\" " + Item.wordStatusOperation + " '" + status + "';";
-						JsonElement e = DB.executeList(sql);
-						return ZResult.OK_200(e.toString());
-					}
-				}
+			//	if (status != null) {
+			//		if (status.length() != 0) {
+			//			String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + " where \"" + Item.wordStatus + "\" " + Item.wordStatusOperation + " '" + status + "';";
+			//			JsonElement e = DB.executeList(sql);
+			//			return ZResult.OK_200(e.toString());
+			//		}
+			//	}
 				
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + ";";
-				JsonElement e = DB.executeList(sql);
-				return ZResult.OK_200(e.toString());
-			}
+			//	String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + ";";
+			//	JsonElement e = DB.executeList(sql);
+			//	return ZResult.OK_200(e.toString());
+			//}
 			if (match(path, method, "/workspaces/*/sessions/*/items, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String session = getFromPathParamsAsString(path, 3);
@@ -495,6 +495,10 @@ public class ZAPIV3 {
 				} else {
 					return ZResult.ERROR_500(new Exception("telnet failed"));
 				}
+			}
+			// TODO: ----------------------------------------------------------------------------------------------------> site-management
+			if (match(path, method, "/site-management, post")) {
+				return CAR02.executeSiteAction(new String(bodyRaw));
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> end
 		} catch (Exception ex) {

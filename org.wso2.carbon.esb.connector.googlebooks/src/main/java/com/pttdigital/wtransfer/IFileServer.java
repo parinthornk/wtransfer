@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 
 import org.apache.commons.net.ftp.FTP;
@@ -35,6 +36,7 @@ public interface IFileServer {
 	public boolean fileExists(String file) throws Exception;
 	public boolean directoryExists(String folder) throws Exception;
 	public void createDirectory(String folder) throws Exception;
+	public void deleteDirectory(String folder) throws Exception;
 	public void move(String fileSource, String fileNameTarget) throws Exception;
 	
 	public static abstract class FileServer implements IFileServer {
@@ -210,6 +212,30 @@ public interface IFileServer {
 			} catch (Exception e) { }
 			return false;
 		}
+
+		@Override
+		public void deleteDirectory(String folder) throws Exception {
+			// TODO Auto-generated method stub
+
+		    // List source directory structure.
+		    Collection<ChannelSftp.LsEntry> fileAndFolderList = sftpChannel.ls(folder);
+
+		    // Iterate objects in the list to get file/folder names.
+		    for (ChannelSftp.LsEntry item : fileAndFolderList) {
+		        if (!item.getAttrs().isDir()) {
+		        	sftpChannel.rm(folder + "/" + item.getFilename()); // Remove file.
+		        } else if (!(".".equals(item.getFilename()) || "..".equals(item.getFilename()))) { // If it is a subdir.
+		            try {
+		                // removing sub directory.
+		            	sftpChannel.rmdir(folder + "/" + item.getFilename());
+		            } catch (Exception e) { // If subdir is not empty and error occurs.
+		                // Do lsFolderRemove on this subdir to enter it and clear its contents.
+		            	deleteDirectory(folder + "/" + item.getFilename());
+		            }
+		        }
+		    }
+		    sftpChannel.rmdir(folder); // delete the parent directory after empty
+		}
 	}
 	
 	// TODO: FTP
@@ -359,6 +385,12 @@ public interface IFileServer {
 			}
 			return false;
 		}
+
+		@Override
+		public void deleteDirectory(String folder) throws Exception {
+			// TODO Auto-generated method stub
+			ftpClient.dele(folder);
+		}
 	}
 	
 	// TODO: FTPS
@@ -507,6 +539,12 @@ public interface IFileServer {
 				}
 			}
 			return false;
+		}
+
+		@Override
+		public void deleteDirectory(String folder) throws Exception {
+			// TODO Auto-generated method stub
+			ftpsClient.dele(folder);
 		}
 	}
 }

@@ -52,6 +52,7 @@ public class CAR02 {
 			ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("JavaScript");
 			ScriptContext ctx = engine.getContext();
 			ctx.setWriter(writer);
+			System.out.println("engine.eval("+script+");");
 			engine.eval(script);
 			String x = writer.toString();
 			if (x.endsWith("\r\n")) {
@@ -495,32 +496,29 @@ public class CAR02 {
 		// TODO Auto-generated method stub
 		return new ArrayList<Item>();
 	}
-	
-	public static class MyClass {
-	    public String id;
-	    public String senderchannel;
-	    public String receivercomponent;
-	    public String channel;
-	    public String System;
-	    public String scenario;
-	    public String direction;
-	    public String receivermessageprotocol;
-	    public String receiverchannel;
-	    public String ServerName;
-	    public String ip;
-	    public int Port;
-	    public String UserName;
-	    public String password;
-	    public String SourceDir;
-	}
 
 	public static void main(String[] arg) throws Exception {
 		
 		if ("".length() == 0) {
-
-			clear_db();
 			
-			//loop();
+			//ZAPIV3.process("/workspaces/default/sites/dcloud-sftp/objects", "get", null, null, (byte[]) null);
+			
+
+			//clear_db();
+			
+			
+			/*ZResult zr = executeSiteAction("{\"site\":\"dcloud-sftp\",\"action\":\"folder.create\",\"objectName\":\"/OREO/zparin\"}");
+			OL.sln(zr.statusCode);
+			OL.sln(zr.content);*/
+			
+			
+			for (int i=0;i<100000;i++) {
+				loop();
+				Thread.sleep(2000);
+			}
+			
+			//rename_all_fn_is_file_to_move();
+			
 			return;
 		}
 		
@@ -965,6 +963,24 @@ public class CAR02 {
 			server.close();
 		}*/
 	}
+	
+	private static void rename_all_fn_is_file_to_move() throws Exception {
+		
+		
+		JsonElement allSchedules = Client.getJsonResponse("http://10.224.143.44:8290/wtransfer/workspaces/default/schedules", "get", null, null);
+		JsonArray arr = allSchedules.getAsJsonObject().get("list").getAsJsonArray();
+		for (JsonElement e : arr) {
+			Schedule schedule = (Schedule) DB.parse(Schedule.class, e.getAsJsonObject());
+			String payload = "{\"fnIsFileToMove\":\"function(x){return x.endsWith(\\\".csv\\\") || x.endsWith(\\\".xlsx\\\");}\"}";
+			Client.getJsonResponse("http://10.224.143.44:8290/wtransfer/workspaces/default/schedules/" + schedule.name + "/patching", "post", null, new Gson().fromJson(payload, JsonObject.class));
+			
+			
+			System.out.println(schedule.name);
+		}
+		System.out.println(arr.size());
+		
+	}
+
 
 	private static HashMap<String, Session> mapSessionsDescription = new HashMap<String, Session>();
 	
@@ -1071,9 +1087,10 @@ public class CAR02 {
 		System.out.println("------------------------------------------------------------------------------------");
 		
 		try {
-
+			
 			// now
 			time_now = new Timestamp(Calendar.getInstance().getTimeInMillis());
+			System.out.println("time_now: " + time_now);
 			
 			// all schedules
 			HashMap<String, Schedule> allSchedules = mapSchedules();
@@ -1081,7 +1098,7 @@ public class CAR02 {
 			
 			// triggered schedules
 			ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules);
-			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("out-20001"));
+			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("test-zparinthornk"));
 			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); Set<String> ks = allSchedules.keySet(); for (String k : ks) {triggered.add(allSchedules.get(k));}
 			System.out.println("triggered: " + triggered.size());
 			
@@ -1113,6 +1130,7 @@ public class CAR02 {
 			
 			// enqueue
 			enqueue(messages);
+			//System.out.println(messages);
 			
 		} catch (Exception ex) { ex.printStackTrace(); }
 		
@@ -1130,5 +1148,42 @@ public class CAR02 {
 		DB.executeDeleteAll("Session");
 		DB.executeDeleteAll("Schedule");
 		DB.executeDeleteAll("Site");
+	}
+	
+	public static ZResult executeSiteAction(String json) throws Exception {
+		
+		ZResult zr = new ZResult();
+		JsonObject o = new Gson().fromJson(json, JsonObject.class);
+		String site = o.get("site").getAsString();
+		String action = o.get("action").getAsString();
+		String objectName = o.get("objectName").getAsString();
+		
+		IFileServer.FileServer server = null;
+		try {
+			JsonElement e = Client.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/default/sites/" + site, "get", null, null);
+			Site mySite = (Site) DB.parse(Site.class, e.getAsJsonObject());
+			server = IFileServer.createServer(mySite);
+			server.open();
+			
+			if (action.equalsIgnoreCase("folder.create")) {
+				server.createDirectory(objectName);
+				zr = new ZResult();
+				zr.statusCode = 201;
+				zr.content = "{\"objectName\": \"" + objectName + "\"}";
+			} else if (action.equalsIgnoreCase("folder.exists")) {
+				zr = ZResult.OK_200("{\"exists\":" + server.directoryExists(objectName) + "}");
+			} else if (action.equalsIgnoreCase("folder.delete")) {
+				server.deleteDirectory(objectName);
+			} else {
+				throw new Exception("The action \"" + action + "\" is not recognized.");
+			}
+			
+			if (server != null) { server.close(); }
+		} catch (Exception ex) {
+			if (server != null) { server.close(); }
+			throw ex;
+		}
+		
+		return zr;
 	}
 }
