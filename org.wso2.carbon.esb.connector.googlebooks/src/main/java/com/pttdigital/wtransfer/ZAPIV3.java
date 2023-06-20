@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,14 +14,30 @@ import java.util.Set;
 import org.wso2.carbon.esb.connector.ZConnector;
 import org.wso2.carbon.esb.connector.ZConnector.Constant;
 import org.wso2.carbon.esb.connector.ZConnector.ZResult;
+import org.wso2.carbon.esb.connector.ZWorker.LogType;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.pttdigital.wtransfer.ImportV2.OL;
 
 public class ZAPIV3 {
 	
+
+	
+    public static void main(String[] args) throws Exception {
+    	
+    	HashMap<String, String> query = new HashMap<String, String>();
+    	query.put("status", "WAITING_FOR_RETRY");
+    	
+    	ZResult result = process("/items", "get", query, null, (byte[])null);
+    	JsonArray arr = new Gson().fromJson(result.content, JsonObject.class).get("list").getAsJsonArray();
+    	
+    	OL.sln(arr.size());
+    	//CAR02.loop();
+    }
+    
 	private static boolean matchPath(String requested, String template) {
 		String[] splitRequested = requested.split("/");
 		String[] splitTemplate = template.split("/");
@@ -113,13 +130,15 @@ public class ZAPIV3 {
 				return Site.getReachability();
 			}
 			if (match(path, method, "/sites, get")) {
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\";";
+				//String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\";";
+				String sql = "select * from " + ZConnector.Constant.SCHEMA + ".\"" + c.getSimpleName() + "\" order by \"" + Site.getWordName() + "\"";
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
 			if (match(path, method, "/workspaces/*/sites, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
-				String sql = DB.sqlListInWorkspace(c, workspace);
+				//String sql = DB.sqlListInWorkspace(c, workspace);
+				String sql = "select * from " + ZConnector.Constant.SCHEMA + ".\"" + c.getSimpleName() + "\" where " + Site.getWordWorkspace() + " = '" + workspace + "' order by \"" + Site.getWordName() + "\"";
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -156,6 +175,8 @@ public class ZAPIV3 {
 				
 				IFileServer server = null;
 				try {
+					
+					
 					Site s = (Site) DB.parse(Site.class, e.getAsJsonObject());
 					server = IFileServer.createServer(s);
 					server.open();
@@ -254,7 +275,20 @@ public class ZAPIV3 {
 			}
 			if (match(path, method, "/workspaces/*/schedules, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
-				String sql = DB.sqlListInWorkspace(c, workspace);
+				//String sql = DB.sqlListInWorkspace(c, workspace);
+				
+				
+				String schema = Constant.SCHEMA;
+				String keyWorkspace = "workspace";
+				String tableMother = "Schedule";
+				String keyMother = "name";
+				String tableChild = "Session";
+				String keyChild = "id";
+				String keyChildLookupMother = "schedule";
+				String countColoumnName = "sessions";
+				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+";";
+				
+				
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -264,13 +298,19 @@ public class ZAPIV3 {
 				return process("/workspaces/" + workspace + "/schedules/" + schedule, "patch", query, header, bodyRaw);
 			}
 			if (match(path, method, "/schedules/update-checkpoint, post")) {
-				String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(new Timestamp(Calendar.getInstance().getTimeInMillis())); // TODO
+				//String now = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(CAR02.time_now); // TODO
+				
+				//String body = new String(bodyRaw);
+				String now = new Gson().fromJson(new String(bodyRaw), JsonObject.class).get("now").getAsString();
+				
 				String sql = "update " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" set \"previousCheckpoint\" = '" + now + "', \"modified\" = '" + now + "' where (\"enabled\" = 'true') and ((\"validFrom\" is null) or (\"validFrom\" <= '" + now + "')) and ((\"validUntil\" is null) or (\"validUntil\" >= '" + now + "')) returning *;"; // TODO: direct wording is too risk
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
 			if (match(path, method, "/workspaces/*/schedules, post")) {
 				
+				
+				OL.sln("123445");
 				
 				String workspace = getFromPathParamsAsString(path, 1);
 				
@@ -304,7 +344,28 @@ public class ZAPIV3 {
 			if (match(path, method, "/workspaces/*/schedules/*, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String schedule = getFromPathParamsAsString(path, 3);
-				String sql = DB.sqlGetInWorkspace(c, schedule, workspace);
+				
+				
+				
+
+				
+				String schema = Constant.SCHEMA;
+				String keyWorkspace = "workspace";
+				String tableMother = "Schedule";
+				String keyMother = "name";
+				String tableChild = "Session";
+				String keyChild = "id";
+				String keyChildLookupMother = "schedule";
+				String countColoumnName = "sessions";
+				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' and "+schema+".\""+tableMother+"\"."+keyMother+" = '"+schedule+"' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+";";
+				
+				
+				
+				
+				
+				
+				
+				//String sql = DB.sqlGetInWorkspace(c, schedule, workspace);
 				JsonElement e = DB.executeGet(sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -349,9 +410,25 @@ public class ZAPIV3 {
 			//}
 			if (match(path, method, "/workspaces/*/sessions/*, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
-				String sessions = getFromPathParamsAsString(path, 3);
+				String session = getFromPathParamsAsString(path, 3);
 				
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Translate.getNameOrId(c) + "\" = '" + sessions + "';";
+				
+
+				String schema = Constant.SCHEMA;
+				String keyWorkspace = "workspace";
+				String tableMother = "Session";
+				String keyMother = "id";
+				String tableChild = "Item";
+				String keyChild = "name";
+				String keyChildLookupMother = "session";
+				String countColoumnName = "items";
+				
+				//String keySessionFindSchedule = "schedule";
+				
+				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' and "+schema+".\""+tableMother+"\".\""+keyMother+"\" = '" + session + "' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+";";
+				
+				
+				//String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Translate.getNameOrId(c) + "\" = '" + sessions + "';";
 				
 				JsonElement e = DB.executeGet(sql);
 				return ZResult.OK_200(e.toString());
@@ -359,7 +436,24 @@ public class ZAPIV3 {
 			if (match(path, method, "/workspaces/*/schedules/*/sessions, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String schedule = getFromPathParamsAsString(path, 3);
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Schedule.class.getSimpleName().toLowerCase() + "\" = '" + schedule + "';";
+				
+				
+
+				String schema = Constant.SCHEMA;
+				String keyWorkspace = "workspace";
+				String tableMother = "Session";
+				String keyMother = "id";
+				String tableChild = "Item";
+				String keyChild = "name";
+				String keyChildLookupMother = "session";
+				String countColoumnName = "items";
+				
+				String keySessionFindSchedule = "schedule";
+				
+				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' and "+schema+".\""+tableMother+"\"."+keySessionFindSchedule+" = '"+schedule+"' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+" order by "+keyMother+" desc;";
+				
+				
+				//String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Schedule.class.getSimpleName().toLowerCase() + "\" = '" + schedule + "';";
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -377,7 +471,38 @@ public class ZAPIV3 {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String schedule = getFromPathParamsAsString(path, 3);
 				String session = getFromPathParamsAsString(path, 5);
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Schedule.class.getSimpleName().toLowerCase() + "\" = '" + schedule + "' and \"" + Translate.getNameOrId(c) + "\" = '" + session + "';";
+				
+				
+				
+				
+				
+				
+				
+				
+
+
+				String schema = Constant.SCHEMA;
+				String keyWorkspace = "workspace";
+				String tableMother = "Session";
+				String keyMother = "id";
+				String tableChild = "Item";
+				String keyChild = "name";
+				String keyChildLookupMother = "session";
+				String countColoumnName = "items";
+				
+				String keySessionFindSchedule = "schedule";
+				
+				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' and "+schema+".\""+tableMother+"\"."+keySessionFindSchedule+" = '"+schedule+"' and "+schema+".\""+tableMother+"\"."+keyMother+" = '"+session+"' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+";";
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				//String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Schedule.class.getSimpleName().toLowerCase() + "\" = '" + schedule + "' and \"" + Translate.getNameOrId(c) + "\" = '" + session + "';";
 				JsonElement e = DB.executeGet(sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -415,10 +540,33 @@ public class ZAPIV3 {
 			//	JsonElement e = DB.executeList(sql);
 			//	return ZResult.OK_200(e.toString());
 			//}
+			if (match(path, method, "/items, get")) {
+				
+				// where conditions
+				ArrayList<String> where = new ArrayList<String>();
+				
+				// status query
+				try { { String field = Item.wordStatus; String x = query.get(field); if (x != null) { if (x.length() > 0) { where.add("\"" + field + "\" = '" + x + "'"); } } } } catch(Exception ex) { }
+				
+				//String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Session.class.getSimpleName().toLowerCase() + "\" = '" + session + "' order by \""+Item.getFileNameWord()+"\" asc;";
+				
+				String sql = "select * from " + Constant.SCHEMA + ".\"" + Item.class.getSimpleName() + "\"";
+				if (where.size() > 0) {
+					String end = " where";
+					for (String x : where) {
+						end += " " + x + " AND";
+					}
+					sql += end;
+					sql = sql.substring(0, sql.length() - " AND".length());
+				}
+				
+				JsonElement e = DB.executeList(sql);
+				return ZResult.OK_200(e.toString());
+			}
 			if (match(path, method, "/workspaces/*/sessions/*/items, get")) {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String session = getFromPathParamsAsString(path, 3);
-				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Session.class.getSimpleName().toLowerCase() + "\" = '" + session + "';";
+				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Session.class.getSimpleName().toLowerCase() + "\" = '" + session + "' order by \""+Item.getFileNameWord()+"\" asc;";
 				JsonElement e = DB.executeList(sql);
 				return ZResult.OK_200(e.toString());
 			}
@@ -436,9 +584,48 @@ public class ZAPIV3 {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String session = getFromPathParamsAsString(path, 3);
 				String item = getFromPathParamsAsString(path, 5);
+				
+				
+				
+				
 				String sql = "select * from " + Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\" where \"" + Workspace.class.getSimpleName().toLowerCase() + "\" = '" + workspace + "' and \"" + Session.class.getSimpleName().toLowerCase() + "\" = '" + session + "' and \"" + Translate.getNameOrId(c) + "\" = '" + item + "';";
 				JsonElement e = DB.executeGet(sql);
 				return ZResult.OK_200(e.toString());
+			}
+			if (match(path, method, "/workspaces/*/sessions/*/items/*/re-execute, post")) {
+				
+				
+				String workspace = getFromPathParamsAsString(path, 1);
+				String sessionId = getFromPathParamsAsString(path, 3);
+				String itemName = getFromPathParamsAsString(path, 5);
+
+		    	ZResult resultItem = process("/workspaces/" + workspace + "/sessions/" + sessionId + "/items/" + itemName, "get", null, null, (byte[])null);
+		    	Item item = (Item) DB.parse(Item.class, new Gson().fromJson(resultItem.content, JsonObject.class));
+		    	
+		    	// get schedule
+		    	ZResult resultSession = process("/workspaces/" + workspace + "/sessions/" + sessionId, "get", null, null, (byte[])null);
+		    	
+		    	String schedule_name = new Gson().fromJson(resultSession.content, JsonObject.class).get("schedule").getAsString();
+		    	ZResult resultSchedule = process("/workspaces/" + workspace + "/schedules/" + schedule_name, "get", null, null, (byte[])null);
+		    	Schedule schedule = (Schedule) DB.parse(Schedule.class, new Gson().fromJson(resultSchedule.content, JsonObject.class));
+
+		    	String site_source_name = new Gson().fromJson(resultSchedule.content, JsonObject.class).get("siteSource").getAsString();
+		    	String site_target_name = new Gson().fromJson(resultSchedule.content, JsonObject.class).get("siteTarget").getAsString();
+		    	
+		    	ZResult site_source = process("/workspaces/" + workspace + "/sites/" + site_source_name, "get", null, null, (byte[])null);
+		    	ZResult site_target = process("/workspaces/" + workspace + "/sites/" + site_target_name, "get", null, null, (byte[])null);
+		    	Site siteSource = (Site) DB.parse(Site.class, new Gson().fromJson(site_source.content, JsonObject.class));
+		    	Site siteTarget = (Site) DB.parse(Site.class, new Gson().fromJson(site_target.content, JsonObject.class));
+		    	
+		    	
+		    	//OL.sln(resultSchedule.content);
+		    	Client.addItemLog(item, Log.Type.INFO, "RE-EXECUTION", "The item is re-executed manually.");
+		    	
+		    	// Site source, Site target, Schedule schedule, Item item
+		    	CAR03.do_move(siteSource, siteTarget, schedule, item);
+		    	
+		    	return ZResult.OK_204();
+				
 			}
 			if (match(path, method, "/workspaces/*/sessions/*/items/*, patch")) {
 				String workspace = getFromPathParamsAsString(path, 1);
@@ -469,7 +656,7 @@ public class ZAPIV3 {
 				String workspace = getFromPathParamsAsString(path, 1);
 				String item = getFromPathParamsAsString(path, 3);
 				String statusQuery = ""; String status = Item.getStatus(query); if (status != null) { if (status.length() > 0) { statusQuery = " and \"" + Item.wordStatus + "\" " + Item.wordStatusOperation + " '" + status + "'"; } }
-				String sql = String.format("select * from %s where \"%s\" = '%s' and \"%s\" = '%s'%s;", Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\"", Workspace.class.getSimpleName().toLowerCase(), workspace, Item.class.getSimpleName().toLowerCase(), item, statusQuery);
+				String sql = String.format("select * from %s where \"%s\" = '%s' and \"%s\" = '%s'%s order by "+Item.getIdWord()+";", Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\"", Workspace.class.getSimpleName().toLowerCase(), workspace, Item.class.getSimpleName().toLowerCase(), item, statusQuery);
 				return ZResult.OK_200(DB.executeList(sql).toString());
 			}
 			if (match(path, method, "/workspaces/*/items/*/logs, post")) {
@@ -481,6 +668,31 @@ public class ZAPIV3 {
 				String sql = "insert into " + Constant.SCHEMA + ".\"" + c.getSimpleName() + "\" (" + DB.concateStmtKeys(m1) + ") values (" + DB.concateStmtValues(m1) + ")" + " returning " + Translate.getNameOrId(c) + ";";
 				JsonElement e = DB.executeInsert(c, sql);
 				return ZResult.OK_200(e.toString());
+			}
+			// TODO: ----------------------------------------------------------------------------------------------------> LogSchedule
+			c = LogSchedule.class;
+			if (match(path, method, "/workspaces/*/schedules/*/logs, get")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				String schedule = getFromPathParamsAsString(path, 3);
+				
+				String sql = String.format("select * from %s where \"%s\" = '%s' and \"%s\" = '%s';", Constant.SCHEMA + ".\"" + c.getSimpleName().toString() + "\"", Workspace.class.getSimpleName().toLowerCase(), workspace, Schedule.class.getSimpleName().toLowerCase(), schedule);
+				return ZResult.OK_200(DB.executeList(sql).toString());
+			}
+			if (match(path, method, "/workspaces/*/schedules/*/logs, post")) {
+				
+				String workspace = getFromPathParamsAsString(path, 1);
+				String schedule = getFromPathParamsAsString(path, 3);
+				HashMap<String, Object> m1 = DB.mapCreate(c, new Gson().fromJson(new String(bodyRaw), JsonObject.class));
+				m1.put(Workspace.class.getSimpleName().toLowerCase(), workspace);
+				m1.put(Schedule.class.getSimpleName().toLowerCase(), schedule);
+				String sql = "insert into " + Constant.SCHEMA + ".\"" + c.getSimpleName() + "\" (" + DB.concateStmtKeys(m1) + ") values (" + DB.concateStmtValues(m1) + ")" + " returning " + Translate.getNameOrId(c) + ";";
+				
+				JsonElement e = DB.executeInsert(c, sql);
+				return ZResult.OK_200(e.toString());
+			}
+			// TODO: ----------------------------------------------------------------------------------------------------> CAR02
+			if (match(path, method, "/b387cbea-56dc-40ee-a1c1-5492e8b32735, get")) {
+				return TestFtpSsl.n0();
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> CAR02
 			if (match(path, method, "/12c27e40-ac08-41ce-a8b7-04d3d62e0ccd, get")) {

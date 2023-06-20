@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.pttdigital.wtransfer.ImportV2.OL;
 
 public class GenerateClassFromSchema {
 	public static void create() throws Exception {
@@ -102,5 +103,9 @@ public class GenerateClassFromSchema {
 		o.addProperty("count", arr2.size());
 		o.add("tables", arr2);
 		return o;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		create();
 	}
 }

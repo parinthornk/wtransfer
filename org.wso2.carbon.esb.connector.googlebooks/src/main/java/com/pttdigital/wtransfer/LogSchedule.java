@@ -2,17 +2,13 @@ package com.pttdigital.wtransfer;
 
 import java.sql.Timestamp;
 
-public class LogItem {
+public class LogSchedule {
 	public String workspace;
 	public long id;
-	public String item;
+	public String schedule;
 	public Timestamp created;
 	public Timestamp modified;
 	public String logType;
 	public String title;
 	public String body;
-	public static String getWordFileName() {
-		// TODO Auto-generated method stub
-		return "fileName";
-	}
 }

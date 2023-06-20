@@ -44,6 +44,10 @@ public class Item {
 	public static final String wordStatus = "status"; // TODO: modify this after DB field change
 	public static final String wordStatusOperation = "ilike"; // TODO: modify this after DB field change
 	
+	public static final String word_timeLatestRetry = "timeLatestRetry"; // TODO: modify this after DB field change
+	public static final String word_timeNextRetry = "timeNextRetry"; // TODO: modify this after DB field change
+	public static final String word_retryRemaining = "retryRemaining"; // TODO: modify this after DB field change
+	
 	public static String getStatus(HashMap<String, String> query) {
 		
 		if (query == null) {
@@ -93,5 +97,39 @@ public class Item {
 			Timestamp timestamp = Timestamp.valueOf(o.get("timestamp").getAsString());
 			return new Info(name, size, isDirectory, timestamp);
 		}
+	}
+
+	public static String getSessionWord() {
+		return "session";
+	}
+
+	public static String getIdWord() {
+		// TODO Auto-generated method stub
+		return "id";
+	}
+
+	public static String getFileNameWord() {
+		// TODO Auto-generated method stub
+		return "fileName";
+	}
+	
+	public static boolean markedAsRetry(Item i, Timestamp time) {
+		
+		// must have remaining retry available
+		if (i.retryRemaining < 1) {
+			return false;
+		}
+		
+		// current time must be after timeNextRetry
+		if (time.before(i.timeNextRetry)) {
+			return false;
+		}
+		
+		// must be in "WAITING_FOR_RETRY" state
+		if (!i.status.equalsIgnoreCase(Item.Status.WAITING_FOR_RETRY.toString())) {
+			return false;
+		}
+		
+		return true;
 	}
 }

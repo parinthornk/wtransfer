@@ -36,4 +36,9 @@ public class Session {
 		ERROR,
 		EXECUTED,
 	}
+
+	public static String getIdWord() {
+		// TODO Auto-generated method stub
+		return "id";
+	}
 }

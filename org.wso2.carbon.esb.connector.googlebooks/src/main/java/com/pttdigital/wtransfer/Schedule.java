@@ -38,6 +38,7 @@ public class Schedule {
 	public Timestamp validUntil;
 	public Timestamp created;
 	public Timestamp modified;
+	public boolean isPendingAdHoc;
 	
 	public static final String wordPlan = "plan";
 	
@@ -77,6 +78,10 @@ public class Schedule {
 	}
 	
 	public static boolean isTriggered(String planningString, Timestamp time_now, Timestamp time_prev) throws Exception {
+		
+		if (planningString.equals("*") || planningString.equals("*-*-* *:*:*")) {
+			return true;
+		}
 		
 		String[] sp1 = planningString.split(" ");
 		

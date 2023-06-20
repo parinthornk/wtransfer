@@ -1,6 +1,13 @@
 package com.pttdigital.wtransfer;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -11,6 +18,7 @@ import java.util.Vector;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.net.ftp.FTPSClient;
 import org.wso2.carbon.esb.connector.ZConnector;
 
@@ -32,6 +40,8 @@ public interface IFileServer {
 	public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception;
 	public void close();
 	public JsonArray listObjects(String folder) throws Exception;
+	
+	//public OutputStreamWriter getOutputStreamWriter(InputStream inputStream, String filePath, String charset) throws Exception;
 
 	public boolean fileExists(String file) throws Exception;
 	public boolean directoryExists(String folder) throws Exception;
@@ -55,12 +65,15 @@ public interface IFileServer {
 	
 	public static IFileServer.FileServer createServer(Site site) throws Exception {
 		if (site.protocol.equalsIgnoreCase("sftp")) {
+			OL.sln("type: ServerSFTP");
 			return new IFileServer.ServerSFTP(site.host, site.port, site.username, site.password, site.keyPath);
 		}
 		if (site.protocol.equalsIgnoreCase("ftp")) {
+			OL.sln("type: ServerFTP");
 			return new IFileServer.ServerFTP(site.host, site.port, site.username, site.password);
 		}
 		if (site.protocol.equalsIgnoreCase("ftps")) {
+			OL.sln("type: ServerFTPS");
 			return new IFileServer.ServerFTPS(site.host, site.port, site.username, site.password);
 		}
 		throw new Exception("Failed to create FileServer: unsupported protocol \"" + site.protocol + "\".");
@@ -104,6 +117,11 @@ public interface IFileServer {
 			channel = session.openChannel("sftp");
             channel.connect(25000);
             sftpChannel = (ChannelSftp) channel;
+            
+            /*// TODO, set encoding
+            sftpChannel.setFilenameEncoding("UTF-8");
+            
+            System.out.println("fisnished.");*/
 		}
 		
 		@Override
@@ -267,13 +285,28 @@ public interface IFileServer {
 			ftpClient.setDefaultTimeout(25000);
 			ftpClient.setConnectTimeout(25000);
 			ftpClient.connect(host, port);
-			ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-			ftpClient.enterLocalPassiveMode();
+			
+			
+			//ftpClient.setControlEncoding("UTF-8");
+			
+			//ftpClient.setAutodetectUTF8(true);
+			
+			
+			
+
 			if (ftpClient.login(username, password)) {
+
+				ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 				
+				ftpClient.enterLocalPassiveMode();
 			} else {
+				
 				throw new Exception("Failed to login FTPClient, host[" + host + "], port[" + port + "], username[" + username + "], password[" + password + "].");
 			}
+			
+			
+			
+			
 		}
 
 		@Override
@@ -288,26 +321,88 @@ public interface IFileServer {
 			ftpClient.changeToParentDirectory();
 			ftpClient.changeToParentDirectory();
 
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			String p = targetFileName;
 			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
 			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
 			while (p.contains("//")) { p = p.replace("//", "/"); }
 			String[] split = p.split("/");
-			OL.sln("split: " + split.length);
+			
 			for (int i=0;i<split.length - 1;i++) {
 
 				ftpClient.changeWorkingDirectory(split[i]);
-				OL.sln("ftpClient.changeWorkingDirectory("+split[i]+")");
-				
-				OL.sln(ftpClient.getReplyString());
-				
-				OL.sln("ftpClient.printWorkingDirectory(): " + ftpClient.printWorkingDirectory());
 			}
 
-			OL.sln("ftpClient.printWorkingDirectory(): " + ftpClient.printWorkingDirectory());
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			/*// ----------------------------------------------------------------------------------------------------------------------------
+			
+			InputStreamReader sourceReader = new InputStreamReader(inputStream, Charset.forName("TIS-620"));
+			
+			
+			File tempFile = File.createTempFile("temp", ".txt");
+			BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+            char[] buffer = new char[4096];
+            int bytesRead;
+            while ((bytesRead = sourceReader.read(buffer)) != -1) {
+                writer.write(buffer, 0, bytesRead);
+            }
+            writer.close();
+			
+			
+
+            // Upload the temporary file to the FTP server
+            FileInputStream is = new FileInputStream(tempFile);
+            boolean uploaded = ftpClient.storeFile(split[split.length - 1], is);
+            is.close();
+
+            tempFile.delete();
+
+            if (uploaded) {
+                System.out.println("File uploaded successfully.");
+            } else {
+            	
+            	throw new Exception("Error uploading file");
+            	
+                //System.out.println("File upload failed.");
+            }
+            
+			// ----------------------------------------------------------------------------------------------------------------------------*/
+			
+			
 			if (!ftpClient.storeFile(split[split.length - 1], inputStream)) {
 				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpClient.getReplyString());
 			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			
 			ftpClient.changeToParentDirectory();
 		}
@@ -326,6 +421,11 @@ public interface IFileServer {
 				Item.Info info = new Item.Info(f.getName(), f.getSize(), f.isDirectory(), new Timestamp(f.getTimestamp().getTimeInMillis() + 0 * 3600 * 1000));
 				arr.add(Item.Info.toDictionary(info));
 			}
+			
+			for (int i=0;i<10;i++) {
+				ftpClient.changeToParentDirectory();
+			}
+			
 			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
 		}
 
@@ -342,9 +442,6 @@ public interface IFileServer {
 
 		@Override
 		public void createDirectory(String folder) throws Exception {
-
-			//ftpClient.changeToParentDirectory();
-			//OL.sln(ftpClient.getReplyString());
 			
 			String p = folder;
 			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
@@ -354,20 +451,17 @@ public interface IFileServer {
 			for (int i=0;i<split.length;i++) {
 				String dir = split[i];
 				if (!ftpClient.changeWorkingDirectory(dir)) {
-					OL.sln(ftpClient.getReplyString());
 					int mkd = ftpClient.mkd(dir);
-					
+					OL.sln("\t" + "ftpClient.mkd(\""+dir+"\") ---> " + mkd);
 					if (mkd > 499) {
 						throw new Exception("Error creating directory \"" + dir + "\", " + ftpClient.getReplyString());
 					}
 					
 					ftpClient.changeWorkingDirectory(dir);
-					OL.sln(ftpClient.getReplyString());
 				}
 			}
 			
 			ftpClient.changeToParentDirectory();
-			OL.sln(ftpClient.getReplyString());
 		}
 
 		@Override
@@ -391,6 +485,60 @@ public interface IFileServer {
 			// TODO Auto-generated method stub
 			ftpClient.dele(folder);
 		}
+
+		/*@Override
+		public OutputStreamWriter getOutputStreamWriter(InputStream inputStream, String filePath, String charset) throws Exception {
+			
+			boolean uploaded = ftpClient.storeFile(new String(filePath.getBytes(charset), "ISO-8859-1"), inputStream);
+			
+			//boolean uploaded = ftpClient.storeFile(new String(filePath.getBytes(charset), "TIS620"), inputStream);
+			
+			
+			
+			
+			System.out.println(uploaded);
+			
+			inputStream.close();
+			
+			
+
+            if (uploaded) {
+                System.out.println("File uploaded successfully.");
+            } else {
+                System.out.println("File upload failed.");
+            }
+            
+            
+            
+            
+            
+            ftpClient.rename(filePath, "/DEV/H102/SAP_OUTBOUND_DEV/ทดสอบ.xlsx");
+            
+            System.out.println(ftpClient.getReplyString());
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            return null;
+			
+			
+			
+			// TODO Auto-generated method stub
+
+			System.out.println("filePath: " + filePath);
+			System.out.println("charset: " + charset);
+			System.out.println("ftpClient: " + ftpClient);
+			System.out.println("ftpClient.storeFileStream(filePath): " + ftpClient.storeFileStream(filePath));
+			
+			
+			
+			return new OutputStreamWriter(ftpClient.storeFileStream(filePath), charset);
+		}*/
 	}
 	
 	// TODO: FTPS
@@ -405,30 +553,38 @@ public interface IFileServer {
 		@Override
 		public void open() throws Exception {
 			
-			// zero bytes // TODO
 			
-			// .lock
 			
-			//timeout();// TODO
+			ftpsClient = new FTPSClient();
+
+			ftpsClient.setDefaultTimeout(25000);
+			ftpsClient.setConnectTimeout(25000);
+
+            ftpsClient.connect(host, port);
+            int replyCode = ftpsClient.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(replyCode)) {
+                throw new Exception("FTP server refused connection.");
+            }
+
+            // Authenticate with the server
+            OL.sln("ftpsClient.login("+username+", "+password+")");
+            if (!ftpsClient.login(username, password)) {
+                throw new Exception("FTP login failed.");
+            }
+
+            // Set binary file transfer mode
+            ftpsClient.setFileType(FTP.BINARY_FILE_TYPE);
+            
+            ftpsClient.enterLocalPassiveMode();
 			
-			// maximum file size
+			OL.sln("ssssss");
 			
-			// enqueue items order by ???
 			
-			// 5 threads configurable -> config in schedule
 			
-			ftpsClient = new FTPSClient(true);
-			//ftpsClient.setAuthValue("TLS");
-			ftpsClient.setDefaultTimeout(3000);
-			ftpsClient.setConnectTimeout(3000);
-			ftpsClient.connect(host, port);
-			ftpsClient.setFileType(FTP.BINARY_FILE_TYPE);
-			ftpsClient.enterLocalPassiveMode();
-			if (ftpsClient.login(username, password)) {
-				
-			} else {
-				throw new Exception("Failed to login ftpsClient, host[" + host + "], port[" + port + "], username[" + username + "], password[" + password + "].");
-			}
+			
+			
+			
+			
 		}
 
 		@Override
@@ -443,26 +599,88 @@ public interface IFileServer {
 			ftpsClient.changeToParentDirectory();
 			ftpsClient.changeToParentDirectory();
 
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			String p = targetFileName;
 			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
 			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
 			while (p.contains("//")) { p = p.replace("//", "/"); }
 			String[] split = p.split("/");
-			OL.sln("split: " + split.length);
+			
 			for (int i=0;i<split.length - 1;i++) {
 
 				ftpsClient.changeWorkingDirectory(split[i]);
-				OL.sln("ftpsClient.changeWorkingDirectory("+split[i]+")");
-				
-				OL.sln(ftpsClient.getReplyString());
-				
-				OL.sln("ftpsClient.printWorkingDirectory(): " + ftpsClient.printWorkingDirectory());
 			}
 
-			OL.sln("ftpsClient.printWorkingDirectory(): " + ftpsClient.printWorkingDirectory());
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			/*// ----------------------------------------------------------------------------------------------------------------------------
+			
+			InputStreamReader sourceReader = new InputStreamReader(inputStream, Charset.forName("TIS-620"));
+			
+			
+			File tempFile = File.createTempFile("temp", ".txt");
+			BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+            char[] buffer = new char[4096];
+            int bytesRead;
+            while ((bytesRead = sourceReader.read(buffer)) != -1) {
+                writer.write(buffer, 0, bytesRead);
+            }
+            writer.close();
+			
+			
+
+            // Upload the temporary file to the FTP server
+            FileInputStream is = new FileInputStream(tempFile);
+            boolean uploaded = ftpsClient.storeFile(split[split.length - 1], is);
+            is.close();
+
+            tempFile.delete();
+
+            if (uploaded) {
+                System.out.println("File uploaded successfully.");
+            } else {
+            	
+            	throw new Exception("Error uploading file");
+            	
+                //System.out.println("File upload failed.");
+            }
+            
+			// ----------------------------------------------------------------------------------------------------------------------------*/
+			
+			
 			if (!ftpsClient.storeFile(split[split.length - 1], inputStream)) {
 				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpsClient.getReplyString());
 			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			
 			ftpsClient.changeToParentDirectory();
 		}
@@ -497,9 +715,6 @@ public interface IFileServer {
 
 		@Override
 		public void createDirectory(String folder) throws Exception {
-
-			//ftpsClient.changeToParentDirectory();
-			//OL.sln(ftpsClient.getReplyString());
 			
 			String p = folder;
 			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
@@ -509,7 +724,6 @@ public interface IFileServer {
 			for (int i=0;i<split.length;i++) {
 				String dir = split[i];
 				if (!ftpsClient.changeWorkingDirectory(dir)) {
-					OL.sln(ftpsClient.getReplyString());
 					int mkd = ftpsClient.mkd(dir);
 					
 					if (mkd > 499) {
@@ -517,12 +731,10 @@ public interface IFileServer {
 					}
 					
 					ftpsClient.changeWorkingDirectory(dir);
-					OL.sln(ftpsClient.getReplyString());
 				}
 			}
 			
 			ftpsClient.changeToParentDirectory();
-			OL.sln(ftpsClient.getReplyString());
 		}
 
 		@Override
@@ -546,5 +758,59 @@ public interface IFileServer {
 			// TODO Auto-generated method stub
 			ftpsClient.dele(folder);
 		}
+
+		/*@Override
+		public OutputStreamWriter getOutputStreamWriter(InputStream inputStream, String filePath, String charset) throws Exception {
+			
+			boolean uploaded = ftpsClient.storeFile(new String(filePath.getBytes(charset), "ISO-8859-1"), inputStream);
+			
+			//boolean uploaded = ftpsClient.storeFile(new String(filePath.getBytes(charset), "TIS620"), inputStream);
+			
+			
+			
+			
+			System.out.println(uploaded);
+			
+			inputStream.close();
+			
+			
+
+            if (uploaded) {
+                System.out.println("File uploaded successfully.");
+            } else {
+                System.out.println("File upload failed.");
+            }
+            
+            
+            
+            
+            
+            ftpsClient.rename(filePath, "/DEV/H102/SAP_OUTBOUND_DEV/ทดสอบ.xlsx");
+            
+            System.out.println(ftpsClient.getReplyString());
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            return null;
+			
+			
+			
+			// TODO Auto-generated method stub
+
+			System.out.println("filePath: " + filePath);
+			System.out.println("charset: " + charset);
+			System.out.println("ftpsClient: " + ftpsClient);
+			System.out.println("ftpsClient.storeFileStream(filePath): " + ftpsClient.storeFileStream(filePath));
+			
+			
+			
+			return new OutputStreamWriter(ftpsClient.storeFileStream(filePath), charset);
+		}*/
 	}
 }

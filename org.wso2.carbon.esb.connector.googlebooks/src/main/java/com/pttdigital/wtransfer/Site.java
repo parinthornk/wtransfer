@@ -79,4 +79,14 @@ public class Site {
 		
 		return ZResult.OK_200(o.toString());
 	}
+
+	public static String getWordWorkspace() {
+		// TODO Auto-generated method stub
+		return "workspace";
+	}
+
+	public static String getWordName() {
+		// TODO Auto-generated method stub
+		return "name";
+	}
 }

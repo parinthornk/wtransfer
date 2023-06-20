@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -121,8 +122,33 @@ public class Client {
 		}
 	}
 
+	public static void addScheduleLog(Schedule schedule, Log.Type t, String title, String body) {
+		try {
+			LogSchedule log = new LogSchedule();
+			log.id = 0;
+			log.schedule = schedule.name;
+			log.logType = t.toString().toUpperCase();
+			log.title = title;
+			log.body = body;
+			getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + schedule.workspace + "/schedules/" + schedule.name + "/logs", "post", null, new Gson().fromJson(DB.toJsonString(log), JsonObject.class));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void updateOnExecuteFailed(Item item, Status status, int retryRemaining, Timestamp timeNextRetry, Timestamp timeLatestRetry) {
 		// TODO Auto-generated method stub
-		
+		try {
+			JsonObject o = new JsonObject();
+			o.addProperty(Item.wordStatus, status.toString().toUpperCase());
+			
+			o.addProperty(Item.word_timeLatestRetry, new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(timeLatestRetry));
+			o.addProperty(Item.word_timeNextRetry, new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(timeNextRetry));
+			o.addProperty(Item.word_retryRemaining, retryRemaining);
+			
+			getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/sessions/" + item.session + "/items/" + item.name + "/patch", "post", null, o);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
