@@ -39,6 +39,7 @@ public class Item {
 		WAITING_FOR_RETRY,
 		FAILED,
 		SUCCESS,
+		DISMISS,
 	}
 	
 	public static final String wordStatus = "status"; // TODO: modify this after DB field change

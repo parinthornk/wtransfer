@@ -185,6 +185,9 @@ public class CAR03 {
 					if (retryRemaining < 1) {
 						Item.Status status = Item.Status.FAILED;
 						Client.updateOnExecuteFailed(item, status, retryRemaining, t_nxt, t_now);
+						
+						// TODO: callback notofication
+						
 					} else {
 						Item.Status status = Item.Status.WAITING_FOR_RETRY;
 						Client.updateOnExecuteFailed(item, status, retryRemaining, t_nxt, t_now);

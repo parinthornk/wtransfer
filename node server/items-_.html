@@ -15,12 +15,12 @@
 
 	<div class="table-responsive">
 		<h3 id="head-schedule"> / <a href="http://localhost:3000/schedules">schedules</a> / <a id="refth001" href="http://localhost:3000/schedules">xxxxxx</a> / <a id="refth002" href="http://localhost:3000/schedules">sessions</a> / <a id="refth003" href="http://localhost:3000/schedules">xxx</a> / <a id="refth004" href="http://localhost:3000/schedules">items</a> / <span id="refth005">xxxxxx</span></h3>
-		<p>File Transfer schedules.</p>
+		<!--p>File Transfer schedules.</p-->
 	  
 		<table style="width:100%" class="table align-middle" id="myTable">
 		</table>
 		
-		<button type="button" class="btn btn-primary" onclick="re_execute()" id="btn_re_execute">Re-Execute</button>
+		<button type="button" class="btn btn-primary" onclick="re_execute()" id="btn_re_execute" style="margin-bottom:25px; margin-left:0px;">Re-Execute</button>
 		
 		
 		<table id="log-table" class="table table-striped table-hover">
@@ -76,10 +76,7 @@ const on_r_code = function(r_code, r_tmp) {
 }
 
 const callAPI = async () => {
-
-
-
-
+	
 	// get parent schedule
 	let url_00 = "https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/sessions/" + session;
 	const response_00 = await fetch(url_00, {
@@ -90,10 +87,6 @@ const callAPI = async () => {
 	});
 	const myJson_00 = await response_00.json();
 	let schedule = myJson_00["schedule"];
-	
-	
-	
-	
 	
 	document.getElementById("refth001").innerHTML = schedule;
 	document.getElementById("refth001").setAttribute("href", "http://localhost:3000/schedules/" + schedule);
@@ -107,11 +100,6 @@ const callAPI = async () => {
 	document.getElementById("refth004").setAttribute("href", "http://localhost:3000" + "/sessions/" + session + "/items");
 	
 	document.getElementById("refth005").innerHTML = item;
-	
-	//document.getElementById("head-schedule").innerHTML = " / <a href=\"http://localhost:3000/schedules" + "\">schedules</a> / <a href=\"http://localhost:3000/schedules/" + scheduleName + "\">" + scheduleName + "</a>";
-	
-	
-	// http://10.224.143.44:8290/wtransfer/workspaces/default/sessions/1480728/items/9b550cbb60e046e3b795c518a52d16f5
 	let url = "https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/sessions/" + session + "/items/" + item;
 	const response = await fetch(url, {
 		method: 'GET',
@@ -120,57 +108,15 @@ const callAPI = async () => {
 		}
 	});
 	
-	/*let unnecessaryFields = [
-		"workspace",
-		"password",
-		"created",
-		"modified",
-		"keyPath"
-	];*/
-	
 	let unnecessaryFields = [
 		"workspace",
-		"created",
+		"session",
+		"name",
+		"description",
 		"modified",
-		"useDynamicDirSource",
-		"fnDynamicDirSource",
-		"useDynamicDirTarget",
-		"fnDynamicDirTarget",
-		"retryCount",
+		"retryQuota",
 		"retryIntervalMs",
-		"fnIsFileToMove",
-		"fnRenameTo",
-		"archiveFolder",
-		"fnArchiveRenameTo",
-		"workerThreads",
-		"pgpDirection",
-		"pgpKeyPath",
-		"pgpKeyPassword",
-		"fnPgpRenameTo",
-		"plan",
-		"validFrom",
-		"validUntil",
-		"staticDirSource",
-		"staticDirTarget"
-	];
-	
-	let fieldRename = [
-		{
-			"from": "siteSource",
-			"to": "source server"
-		},
-		{
-			"from": "siteTarget",
-			"to": "target server"
-		},
-		{
-			"from": "name",
-			"to": "schedule name"
-		},
-		{
-			"from": "previousCheckpoint",
-			"to": "last updated"
-		}
+		"fnCallback"
 	];
 	
 	const myJson = await response.json();
@@ -184,6 +130,13 @@ const callAPI = async () => {
 	for (let i=0;i<fields.length;i++) {
 		let tkey = fields[i];
 		let tvalue = obj[tkey];
+		
+		// -------------------------------------------------------------------- //
+		// for 2023-06-21, remove some fields for presentation purpose
+		if (unnecessaryFields.includes(tkey)) {
+			continue;
+		}
+		// -------------------------------------------------------------------- //
 		
 
 		if (tvalue == "null") {
@@ -211,89 +164,6 @@ const callAPI = async () => {
 	document.getElementById("btn_re_execute").style.visibility = "visible";
 	
 	document.getElementById("myTable").innerHTML = inner;
-	
-	
-	
-	/*if (objects.length > 0) {
-		
-		// sample
-		let sample = objects[0];
-		
-		// delete unnecessary fields
-		for (let i = 0; i < unnecessaryFields.length; i++) {
-			delete sample[unnecessaryFields[i]];
-		}
-		
-		// assign thead
-		let thead = "";
-		let fields = Object.keys(sample);
-		for (let i=0;i<fields.length;i++) {
-			let field = fields[i];
-			
-			// rename
-			for (let n = 0; n < fieldRename.length; n++) {
-				let fr = fieldRename[n];
-				if (fr["from"] === field) {
-					field = fr["to"];
-				}
-			}
-			
-			let th = "<th>"+field+"</th>";
-			thead += th;
-		}
-		thead = "<thead><tr>" + thead + "</tr></thead>";
-		
-		// assign tbody
-		let tbody = "";
-		for (let i=0;i<objects.length;i++) {
-			let obj = objects[i];
-			
-			let th = "";
-			for (let j=0;j<fields.length;j++) {
-				let tkey = fields[j];
-				let tvalue = obj[tkey];
-				
-				if (tvalue == "null") {
-					tvalue = "-";
-				}
-				if (tvalue == null) {
-					tvalue = "-";
-				}
-				
-				if (j == 4) { // beautiful status enabled
-				
-					if (tvalue) {
-						th += "<td><span class=\"badge badge-warning rounded-pill d-inline\" style=\"background-color: #ccffdd; color: #001600;\">enabled</span></td>";
-					} else {
-						th += "<td><span class=\"badge badge-warning rounded-pill d-inline\" style=\"background-color: #ffddcc; color: #160000;\">disabled</span></td>";
-					}
-					
-					
-				} else if (j == 6) { // link to sessions
-					if (tvalue < 1) {
-						th += "<td><button type=\"button\" class=\"btn btn-link btn-rounded btn-sm fw-bold\" data-mdb-ripple-color=\"dark\">-</button></td>";
-					} else {
-					
-						// <a class="btn" href="">Link</a>
-						let scheduleName = obj["name"];
-						th += "<td><a class=\"btn\" href=\"http://localhost:3000/schedules/" + scheduleName + "/sessions\">" + tvalue + "</a></td>";
-						
-						
-						
-						//th += "<td><button type=\"button\" class=\"btn btn-link btn-rounded btn-sm fw-bold\" data-mdb-ripple-color=\"dark\">" + tvalue + "</button></td>";
-					}
-				} else {
-					th += "<td>" + tvalue + "</td>";
-				}
-			}
-			th = "<tr>" + th + "</tr>";
-			tbody += th;
-		}
-		tbody = "<tbody>" + tbody + "</tbody>";
-		let tall = thead + tbody;
-		//console.log(tall);
-		document.getElementById("myTable").innerHTML = tall;
-	}*/
 }
 
 
@@ -407,19 +277,29 @@ const retrive_item_logs = async () => {
 				let tkey = fields[j];
 				let tvalue = obj[tkey];
 				
-				
-				// remove password
-				if (("" + tvalue).includes("], password[")) {
-					let fgmj = tvalue.split(", ");
-					let dfugh = "";
-					for (let mm = 0; mm < fgmj.length; mm++) {
-						if (!fgmj[mm].includes("password")) {
-							dfugh += fgmj[mm] + ", ";
+				if (j == 4) {
+					// ------------------------------------------------------------------------------------ // beautify begin
+					// remove password
+					if (("" + tvalue).includes("], password[")) {
+						let fgmj = tvalue.split(", ");
+						let dfugh = "";
+						for (let mm = 0; mm < fgmj.length; mm++) {
+							if (!fgmj[mm].includes("password")) {
+								dfugh += fgmj[mm] + ", ";
+							}
 						}
+						tvalue = dfugh.substr(0, dfugh.length - 2);
 					}
-					tvalue = dfugh.substr(0, dfugh.length - 2);
+					
+					// remove ", keyPath[null]"
+					tvalue = ("" + tvalue).replace(", keyPath[null]", "");
+					
+					// some starts with "host["
+					if (("" + tvalue).startsWith("host[")) {
+						tvalue = "Connecting target: " + tvalue;
+					}
+					// ------------------------------------------------------------------------------------ // beautify end
 				}
-				
 				
 				
 				if (tvalue == "null") {
