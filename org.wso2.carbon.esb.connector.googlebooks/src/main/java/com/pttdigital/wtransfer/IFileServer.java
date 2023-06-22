@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -47,6 +48,7 @@ public interface IFileServer {
 	public boolean directoryExists(String folder) throws Exception;
 	public void createDirectory(String folder) throws Exception;
 	public void deleteDirectory(String folder) throws Exception;
+	public void deleteFile(String fileName) throws Exception;
 	public void move(String fileSource, String fileNameTarget) throws Exception;
 	
 	public static abstract class FileServer implements IFileServer {
@@ -65,15 +67,15 @@ public interface IFileServer {
 	
 	public static IFileServer.FileServer createServer(Site site) throws Exception {
 		if (site.protocol.equalsIgnoreCase("sftp")) {
-			OL.sln("type: ServerSFTP");
+			//OL.sln("type: ServerSFTP");
 			return new IFileServer.ServerSFTP(site.host, site.port, site.username, site.password, site.keyPath);
 		}
 		if (site.protocol.equalsIgnoreCase("ftp")) {
-			OL.sln("type: ServerFTP");
+			//OL.sln("type: ServerFTP");
 			return new IFileServer.ServerFTP(site.host, site.port, site.username, site.password);
 		}
 		if (site.protocol.equalsIgnoreCase("ftps")) {
-			OL.sln("type: ServerFTPS");
+			//OL.sln("type: ServerFTPS");
 			return new IFileServer.ServerFTPS(site.host, site.port, site.username, site.password);
 		}
 		throw new Exception("Failed to create FileServer: unsupported protocol \"" + site.protocol + "\".");
@@ -254,6 +256,12 @@ public interface IFileServer {
 		    }
 		    sftpChannel.rmdir(folder); // delete the parent directory after empty
 		}
+
+		@Override
+		public void deleteFile(String fileName) throws Exception {
+			// TODO Auto-generated method stub
+			sftpChannel.rm(fileName);
+		}
 	}
 	
 	// TODO: FTP
@@ -317,21 +325,7 @@ public interface IFileServer {
 		@Override
 		public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception {
 			
-			ftpClient.changeToParentDirectory();
-			ftpClient.changeToParentDirectory();
-			ftpClient.changeToParentDirectory();
-
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+			goToParentDir();
 			
 			String p = targetFileName;
 			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
@@ -343,66 +337,10 @@ public interface IFileServer {
 
 				ftpClient.changeWorkingDirectory(split[i]);
 			}
-
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			/*// ----------------------------------------------------------------------------------------------------------------------------
-			
-			InputStreamReader sourceReader = new InputStreamReader(inputStream, Charset.forName("TIS-620"));
-			
-			
-			File tempFile = File.createTempFile("temp", ".txt");
-			BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-            char[] buffer = new char[4096];
-            int bytesRead;
-            while ((bytesRead = sourceReader.read(buffer)) != -1) {
-                writer.write(buffer, 0, bytesRead);
-            }
-            writer.close();
-			
-			
-
-            // Upload the temporary file to the FTP server
-            FileInputStream is = new FileInputStream(tempFile);
-            boolean uploaded = ftpClient.storeFile(split[split.length - 1], is);
-            is.close();
-
-            tempFile.delete();
-
-            if (uploaded) {
-                System.out.println("File uploaded successfully.");
-            } else {
-            	
-            	throw new Exception("Error uploading file");
-            	
-                //System.out.println("File upload failed.");
-            }
-            
-			// ----------------------------------------------------------------------------------------------------------------------------*/
-			
 			
 			if (!ftpClient.storeFile(split[split.length - 1], inputStream)) {
 				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpClient.getReplyString());
 			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
 			
 			ftpClient.changeToParentDirectory();
 		}
@@ -482,63 +420,28 @@ public interface IFileServer {
 
 		@Override
 		public void deleteDirectory(String folder) throws Exception {
-			// TODO Auto-generated method stub
 			ftpClient.dele(folder);
 		}
 
-		/*@Override
-		public OutputStreamWriter getOutputStreamWriter(InputStream inputStream, String filePath, String charset) throws Exception {
+		@Override
+		public void deleteFile(String fileName) throws Exception {
 			
-			boolean uploaded = ftpClient.storeFile(new String(filePath.getBytes(charset), "ISO-8859-1"), inputStream);
+			goToParentDir();
 			
-			//boolean uploaded = ftpClient.storeFile(new String(filePath.getBytes(charset), "TIS620"), inputStream);
-			
-			
-			
-			
-			System.out.println(uploaded);
-			
-			inputStream.close();
-			
-			
-
-            if (uploaded) {
-                System.out.println("File uploaded successfully.");
-            } else {
-                System.out.println("File upload failed.");
-            }
-            
-            
-            
-            
-            
-            ftpClient.rename(filePath, "/DEV/H102/SAP_OUTBOUND_DEV/ทดสอบ.xlsx");
-            
-            System.out.println(ftpClient.getReplyString());
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            return null;
-			
-			
-			
-			// TODO Auto-generated method stub
-
-			System.out.println("filePath: " + filePath);
-			System.out.println("charset: " + charset);
-			System.out.println("ftpClient: " + ftpClient);
-			System.out.println("ftpClient.storeFileStream(filePath): " + ftpClient.storeFileStream(filePath));
-			
-			
-			
-			return new OutputStreamWriter(ftpClient.storeFileStream(filePath), charset);
-		}*/
+			boolean deleted = ftpClient.deleteFile(fileName);
+			if (deleted) {
+				String error = ftpClient.getReplyString();
+				if (!error.contains("250")) {
+					throw new Exception(error);
+				}
+			}
+		}
+		
+		private void goToParentDir() throws IOException {
+			for (int i = 0; i < 3; i++) {
+				ftpClient.changeToParentDirectory();
+			}
+		}
 	}
 	
 	// TODO: FTPS
@@ -595,21 +498,7 @@ public interface IFileServer {
 		@Override
 		public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception {
 			
-			ftpsClient.changeToParentDirectory();
-			ftpsClient.changeToParentDirectory();
-			ftpsClient.changeToParentDirectory();
-
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+			goToParentDir();
 			
 			String p = targetFileName;
 			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
@@ -621,66 +510,10 @@ public interface IFileServer {
 
 				ftpsClient.changeWorkingDirectory(split[i]);
 			}
-
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			/*// ----------------------------------------------------------------------------------------------------------------------------
-			
-			InputStreamReader sourceReader = new InputStreamReader(inputStream, Charset.forName("TIS-620"));
-			
-			
-			File tempFile = File.createTempFile("temp", ".txt");
-			BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-            char[] buffer = new char[4096];
-            int bytesRead;
-            while ((bytesRead = sourceReader.read(buffer)) != -1) {
-                writer.write(buffer, 0, bytesRead);
-            }
-            writer.close();
-			
-			
-
-            // Upload the temporary file to the FTP server
-            FileInputStream is = new FileInputStream(tempFile);
-            boolean uploaded = ftpsClient.storeFile(split[split.length - 1], is);
-            is.close();
-
-            tempFile.delete();
-
-            if (uploaded) {
-                System.out.println("File uploaded successfully.");
-            } else {
-            	
-            	throw new Exception("Error uploading file");
-            	
-                //System.out.println("File upload failed.");
-            }
-            
-			// ----------------------------------------------------------------------------------------------------------------------------*/
-			
 			
 			if (!ftpsClient.storeFile(split[split.length - 1], inputStream)) {
 				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpsClient.getReplyString());
 			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
 			
 			ftpsClient.changeToParentDirectory();
 		}
@@ -759,58 +592,24 @@ public interface IFileServer {
 			ftpsClient.dele(folder);
 		}
 
-		/*@Override
-		public OutputStreamWriter getOutputStreamWriter(InputStream inputStream, String filePath, String charset) throws Exception {
+		@Override
+		public void deleteFile(String fileName) throws Exception {
 			
-			boolean uploaded = ftpsClient.storeFile(new String(filePath.getBytes(charset), "ISO-8859-1"), inputStream);
+			goToParentDir();
 			
-			//boolean uploaded = ftpsClient.storeFile(new String(filePath.getBytes(charset), "TIS620"), inputStream);
-			
-			
-			
-			
-			System.out.println(uploaded);
-			
-			inputStream.close();
-			
-			
-
-            if (uploaded) {
-                System.out.println("File uploaded successfully.");
-            } else {
-                System.out.println("File upload failed.");
-            }
-            
-            
-            
-            
-            
-            ftpsClient.rename(filePath, "/DEV/H102/SAP_OUTBOUND_DEV/ทดสอบ.xlsx");
-            
-            System.out.println(ftpsClient.getReplyString());
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            return null;
-			
-			
-			
-			// TODO Auto-generated method stub
-
-			System.out.println("filePath: " + filePath);
-			System.out.println("charset: " + charset);
-			System.out.println("ftpsClient: " + ftpsClient);
-			System.out.println("ftpsClient.storeFileStream(filePath): " + ftpsClient.storeFileStream(filePath));
-			
-			
-			
-			return new OutputStreamWriter(ftpsClient.storeFileStream(filePath), charset);
-		}*/
+			boolean deleted = ftpsClient.deleteFile(fileName);
+			if (deleted) {
+				String error = ftpsClient.getReplyString();
+				if (!error.contains("250")) {
+					throw new Exception(error);
+				}
+			}
+		}
+		
+		private void goToParentDir() throws IOException {
+			for (int i = 0; i < 3; i++) {
+				ftpsClient.changeToParentDirectory();
+			}
+		}
 	}
 }

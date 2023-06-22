@@ -712,6 +712,25 @@ public class ZAPIV3 {
 			if (match(path, method, "/site-management, post")) {
 				return CAR02.executeSiteAction(new String(bodyRaw));
 			}
+			// TODO: ----------------------------------------------------------------------------------------------------> sync_transfer
+			if (match(path, method, "/workspaces/*/synchronous-operations/transfer, post")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				JsonObject o = null; try { o = new Gson().fromJson(new String(bodyRaw), JsonObject.class); } catch (Exception ex) { return ZResult.ERROR_400(new Exception("Failed to parse the request into JSON.")); }
+		    	String transferMode = null; try { transferMode = o.get("transferMode").getAsString(); } catch (Exception ex) { } if (transferMode == null) { return ZResult.ERROR_400(new Exception("Parameter \"transferMode\" is required.")); }
+		    	String sourceServer = null; try { sourceServer = o.get("sourceServer").getAsString(); } catch (Exception ex) { } if (sourceServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceServer\" is required.")); }
+		    	String sourceFile = null; try { sourceFile = o.get("sourceFile").getAsString(); } catch (Exception ex) { } if (sourceFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceFile\" is required.")); }
+		    	String targetServer = null; try { targetServer = o.get("targetServer").getAsString(); } catch (Exception ex) { } if (targetServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetServer\" is required.")); }
+		    	String targetFile = null; try { targetFile = o.get("targetFile").getAsString(); } catch (Exception ex) { } if (targetFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetFile\" is required.")); }
+				return CAR02.sync_transfer(workspace, transferMode, sourceServer, sourceFile, targetServer, targetFile);
+			}
+			// TODO: ----------------------------------------------------------------------------------------------------> sync_delete
+			if (match(path, method, "/workspaces/*/synchronous-operations/delete, post")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				JsonObject o = null; try { o = new Gson().fromJson(new String(bodyRaw), JsonObject.class); } catch (Exception ex) { return ZResult.ERROR_400(new Exception("Failed to parse the request into JSON.")); }
+				String server = null; try { server = o.get("server").getAsString(); } catch (Exception ex) { } if (server == null) { return ZResult.ERROR_400(new Exception("Parameter \"server\" is required.")); }
+		    	String file = null; try { file = o.get("file").getAsString(); } catch (Exception ex) { } if (file == null) { return ZResult.ERROR_400(new Exception("Parameter \"file\" is required.")); }
+		    	return CAR02.sync_delete(workspace, server, file);
+			}
 			// TODO: ----------------------------------------------------------------------------------------------------> end
 		} catch (Exception ex) {
 			ex.printStackTrace();

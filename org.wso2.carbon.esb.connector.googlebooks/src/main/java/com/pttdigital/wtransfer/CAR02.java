@@ -49,6 +49,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.pttdigital.wtransfer.IFileServer.FileServer;
 import com.pttdigital.wtransfer.ImportV2.OL;
 
 public class CAR02 {
@@ -533,6 +534,7 @@ public class CAR02 {
 
 
 	private static HashMap<String, ArrayList<String>> constructItemsMessage(ArrayList<Item> itemsToCreated, HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites, HashMap<String, Session> _mapSessionsDescription, boolean useMapItemDescription) throws Exception, IllegalArgumentException, IllegalAccessException {
+		// eyJpdGVtIjp7IndvcmtzcGFjZSI6ImRlZmF1bHQiLCJmaWxlTmFtZSI6ImZpbGVfZXhhbXBsZV9YTFNYXzJNQi0wMDAwLnhsc3giLCJyZXRyeVJlbWFpbmluZyI6NiwiZmlsZU5hbWVBcmNoaXZlIjoiZmlsZV9leGFtcGxlX1hMU1hfMk1CLTAwMDAueGxzeC4yMDIzMDYyMDE3MjQwMS5hcmMiLCJzZXNzaW9uIjo3Mzc2MTU0LCJjcmVhdGVkIjoiMjAyMy0wNi0yMCAxNzoyNDowMSIsInJldHJ5SW50ZXJ2YWxNcyI6NjAwMDAsImRlc2NyaXB0aW9uIjoiQXV0by1nZW5lcmF0ZWQgYnkgc2NoZWR1bGUgdGVzdC16cGFyaW50aG9ybmstMDYyMC4gWzJmYjExMDUyNzA5YzQ5ZTE4NWM5MWQ2ZTllNWEyZWE3XSIsImZuQ2FsbGJhY2siOm51bGwsImZvbGRlciI6Ii9TYXBGYXgvQ05ETkRBVEEiLCJ0aW1lTGF0ZXN0UmV0cnkiOiIxOTcwLTAxLTAxIDAwOjAwOjAwIiwibmFtZSI6ImRjZmQ0YWNhZWMzNjQ3MmM5OGEyYjg4NGU5Zjg3Zjc2IiwibW9kaWZpZWQiOiIyMDIzLTA2LTIwIDE3OjI0OjA0IiwicmV0cnlRdW90YSI6NSwiZm9sZGVyQXJjaGl2ZSI6Ii9TYXBGYXgvQ05ETkRBVEEvQXJjaGl2ZSIsInRpbWVOZXh0UmV0cnkiOiIxOTcwLTAxLTAxIDAwOjAwOjAwIiwic3RhdHVzIjoiV0FJVElOR19GT1JfUkVUUlkifSwic2Vzc2lvbiI6eyJzY2hlZHVsZSI6InRlc3QtenBhcmludGhvcm5rLTA2MjAiLCJ3b3Jrc3BhY2UiOiJkZWZhdWx0IiwiY3JlYXRlZCI6IjIwMjMtMDYtMjAgMTc6MjQ6MDEiLCJkZXNjcmlwdGlvbiI6IkF1dG8tZ2VuZXJhdGVkIGJ5IHNjaGVkdWxlIHRlc3QtenBhcmludGhvcm5rLTA2MjAuIFsyZmIxMTA1MjcwOWM0OWUxODVjOTFkNmU5ZTVhMmVhN10iLCJtb2RpZmllZCI6IjIwMjMtMDYtMjAgMTc6MjQ6MDEiLCJyZW1hcmsiOm51bGwsImlkIjo3Mzc2MTU0LCJzdGF0dXMiOiJDUkVBVEVEIn0sInNjaGVkdWxlIjp7IndvcmtzcGFjZSI6ImRlZmF1bHQiLCJwZ3BLZXlQYXRoIjpudWxsLCJkZXNjcmlwdGlvbiI6IiIsInBncERpcmVjdGlvbiI6bnVsbCwidmFsaWRGcm9tIjpudWxsLCJlbmFibGVkIjp0cnVlLCJzdGF0aWNEaXJTb3VyY2UiOiIvU2FwRmF4L0NORE5EQVRBIiwiZm5Jc0ZpbGVUb01vdmUiOiJmdW5jdGlvbih4KXtyZXR1cm4geC50b0xvd2VyQ2FzZSgpLmVuZHNXaXRoKFwiLmNzdlwiKSB8fCB4LnRvTG93ZXJDYXNlKCkuZW5kc1dpdGgoXCIueGxzeFwiKSB8fCB4LnRvTG93ZXJDYXNlKCkuZW5kc1dpdGgoXCIudHh0XCIpO30iLCJmblBncFJlbmFtZVRvIjpudWxsLCJtb2RpZmllZCI6IjIwMjMtMDYtMjAgMTg6MjA6MjEiLCJmbkFyY2hpdmVSZW5hbWVUbyI6bnVsbCwicGxhbiI6IiotKi0qICo6MDA6MDAsKi0qLSogKjowMTowMCwqLSotKiAqOjAyOjAwLCotKi0qICo6MDM6MDAsKi0qLSogKjowNDowMCwqLSotKiAqOjA1OjAwLCotKi0qICo6MDY6MDAsKi0qLSogKjowNzowMCwqLSotKiAqOjA4OjAwLCotKi0qICo6MDk6MDAsKi0qLSogKjoxMDowMCwqLSotKiAqOjExOjAwLCotKi0qICo6MTI6MDAsKi0qLSogKjoxMzowMCwqLSotKiAqOjE0OjAwLCotKi0qICo6MTU6MDAsKi0qLSogKjoxNjowMCwqLSotKiAqOjE3OjAwLCotKi0qICo6MTg6MDAsKi0qLSogKjoxOTowMCwqLSotKiAqOjIwOjAwLCotKi0qICo6MjE6MDAsKi0qLSogKjoyMjowMCwqLSotKiAqOjIzOjAwLCotKi0qICo6MjQ6MDAsKi0qLSogKjoyNTowMCwqLSotKiAqOjI2OjAwLCotKi0qICo6Mjc6MDAsKi0qLSogKjoyODowMCwqLSotKiAqOjI5OjAwLCotKi0qICo6MzA6MDAsKi0qLSogKjozMTowMCwqLSotKiAqOjMyOjAwLCotKi0qICo6MzM6MDAsKi0qLSogKjozNDowMCwqLSotKiAqOjM1OjAwLCotKi0qICo6MzY6MDAsKi0qLSogKjozNzowMCwqLSotKiAqOjM4OjAwLCotKi0qICo6Mzk6MDAsKi0qLSogKjo0MDowMCwqLSotKiAqOjQxOjAwLCotKi0qICo6NDI6MDAsKi0qLSogKjo0MzowMCwqLSotKiAqOjQ0OjAwLCotKi0qICo6NDU6MDAsKi0qLSogKjo0NjowMCwqLSotKiAqOjQ3OjAwLCotKi0qICo6NDg6MDAsKi0qLSogKjo0OTowMCwqLSotKiAqOjUwOjAwLCotKi0qICo6NTE6MDAsKi0qLSogKjo1MjowMCwqLSotKiAqOjUzOjAwLCotKi0qICo6NTQ6MDAsKi0qLSogKjo1NTowMCwqLSotKiAqOjU2OjAwLCotKi0qICo6NTc6MDAsKi0qLSogKjo1ODowMCwqLSotKiAqOjU5OjAwIiwidXNlRHluYW1pY0RpclNvdXJjZSI6ZmFsc2UsImZuUmVuYW1lVG8iOiJmdW5jdGlvbih4KXtyZXR1cm4geDt9Iiwic2l0ZVNvdXJjZSI6ImRjbG91ZC1zZnRwIiwicmV0cnlDb3VudCI6NSwiY3JlYXRlZCI6IjIwMjMtMDYtMjAgMTc6MTc6MzciLCJpc1BlbmRpbmdBZEhvYyI6ZmFsc2UsInJldHJ5SW50ZXJ2YWxNcyI6NjAwMDAsInNpdGVUYXJnZXQiOiJsZWdhY3ktZmE1MzY3ZWMtYmU2OS00MmZhLTg0NjUtNjNmMTIyYmQ3YmFmIiwiZm5EeW5hbWljRGlyVGFyZ2V0IjpudWxsLCJwcmV2aW91c0NoZWNrcG9pbnQiOiIyMDIzLTA2LTIwIDE4OjIwOjIxIiwic3RhdGljRGlyVGFyZ2V0IjoiL25vdF9leGlzdHMvU2FwRmF4L0NORE5EQVRBL25vdF9leGlzdHMiLCJhcmNoaXZlRm9sZGVyIjoiL2FyY2hpdmUiLCJmbkR5bmFtaWNEaXJTb3VyY2UiOm51bGwsInBncEtleVBhc3N3b3JkIjpudWxsLCJuYW1lIjoidGVzdC16cGFyaW50aG9ybmstMDYyMCIsInZhbGlkVW50aWwiOm51bGwsInVzZUR5bmFtaWNEaXJUYXJnZXQiOmZhbHNlLCJ3b3JrZXJUaHJlYWRzIjo1fSwic2l0ZVNvdXJjZSI6eyJ3b3Jrc3BhY2UiOiJkZWZhdWx0IiwicHJvdG9jb2wiOiJzZnRwIiwicGFzc3dvcmQiOiJXU08yREBzZnRwIzk5IiwicG9ydCI6MjIsImNyZWF0ZWQiOiIyMDIzLTA0LTIwIDEyOjI4OjU5Iiwia2V5UGF0aCI6IiIsIm5hbWUiOiJkY2xvdWQtc2Z0cCIsImhvc3QiOiJvci1zZnRwc2Vydi10MDEucHR0b3IuY29tIiwiZGVzY3JpcHRpb24iOiIiLCJtb2RpZmllZCI6IjIwMjMtMDQtMjUgMTI6MjQ6MzgiLCJ1c2VybmFtZSI6InNmdHBfd3NvMmRfb3JlbyJ9LCJzaXRlVGFyZ2V0Ijp7IndvcmtzcGFjZSI6ImRlZmF1bHQiLCJwcm90b2NvbCI6ImZ0cCIsInBhc3N3b3JkIjoiY2NuZG51c3IiLCJwb3J0IjoyMSwiY3JlYXRlZCI6IjIwMjMtMDQtMjAgMTI6Mjg6NTgiLCJrZXlQYXRoIjpudWxsLCJuYW1lIjoibGVnYWN5LWZhNTM2N2VjLWJlNjktNDJmYS04NDY1LTYzZjEyMmJkN2JhZiIsImhvc3QiOiIxNzIuMjMuMTYuNTUiLCJkZXNjcmlwdGlvbiI6bnVsbCwibW9kaWZpZWQiOiIyMDIzLTA0LTIwIDEyOjI4OjU4IiwidXNlcm5hbWUiOiJjbmRudXNyIn19
 		HashMap<String, ArrayList<String>> messages = new HashMap<String, ArrayList<String>>();
 		for (Item item : itemsToCreated) {
 			
@@ -811,19 +813,6 @@ public class CAR02 {
 		return zr;
 	}
 	
-    public static void main(String[] args) throws Exception {
-    	loop();
-    	
-    	//clear_db();
-
-		/*OL.sln("============================================================================================================================================================");
-    	for (int i=0;i<100;i++) {
-    		loop();
-    		OL.sln("============================================================================================================================================================");
-    		Thread.sleep(20000);
-    	}*/
-    }
-	
 	private static HashMap<String, ArrayList<String>> getItemsForRetry(HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites) throws Exception {
     	HashMap<String, String> query = new HashMap<String, String>();
     	query.put("status", "WAITING_FOR_RETRY");
@@ -858,4 +847,177 @@ public class CAR02 {
     	
     	return constructItemsMessage(items, allSchedules, allSites, mapSessions, false);
 	}
+    
+    public static ZResult sync_transfer(String workspace, String transferMode, String sourceServer, String sourceFile, String targetServer, String targetFile) {
+    	Exception exception = null;
+    	int code = 200;
+    	
+    	FileServer serverSource = null;
+    	FileServer serverTarget = null;
+    	InputStream inputStreamSource = null;
+    	
+    	try {
+        	
+        	// validate action
+        	if (!transferMode.equalsIgnoreCase("move") && !transferMode.equalsIgnoreCase("copy")) {
+        		code = 400;
+        		throw new Exception("Invalid transfer mode. Parameter \"transferMode\" must be assigned as \"COPY\" or \"MOVE\".");
+        	}
+    		
+    		// retrieve sites
+        	HashMap<String, Site> allSites = null;
+        	try {
+        		allSites = mapSites();
+        		code = 500;
+        	} catch (Exception ex) {
+        		throw new Exception("Error retrieving servers information from database. " + ex);
+        	}
+        	
+        	// connect, login to source
+        	try {
+        		Site site = allSites.get(sourceServer);
+        		if (site == null) { throw new Exception("Error retrieving servers information from database. The server \"" + sourceServer + "\" could not be found on workspace \"" + workspace + "\"."); }
+        		if (!site.workspace.equals(workspace)) { throw new Exception("Error retrieving servers information from database. The server \"" + sourceServer + "\" could not be found on workspace \"" + workspace + "\"."); }
+        		serverSource = IFileServer.createServer(site);
+        		serverSource.open();
+        	} catch (Exception ex) {
+        		code = 500;
+        		throw new Exception("Error connecting to source server \"" + sourceServer + "\". " + ex);
+        	}
+        	
+        	// connect, login to target
+        	try {
+        		Site site = allSites.get(targetServer);
+        		if (site == null) { throw new Exception("Error retrieving servers information from database. The server \"" + targetServer + "\" could not be found on workspace \"" + workspace + "\"."); }
+        		if (!site.workspace.equals(workspace)) { throw new Exception("Error retrieving servers information from database. The server \"" + targetServer + "\" could not be found on workspace \"" + workspace + "\"."); }
+        		serverTarget = IFileServer.createServer(site);
+            	serverTarget.open();
+        	} catch (Exception ex) {
+        		code = 500;
+        		throw new Exception("Error connecting to target server \"" + targetServer + "\". " + ex);
+        	}
+        	
+        	// source stream
+        	try {
+            	inputStreamSource = serverSource.getInputStream(sourceFile);
+            	if (inputStreamSource == null) {
+            		throw new Exception("Please make sure the file \"" + sourceFile + "\" exist and is accessible by the logged user.");
+            	}
+        	} catch (Exception ex) {
+        		code = 500;
+        		throw new Exception("Error acquiring InputStream on source file \"" + sourceFile + "\". " + ex);
+        	}
+        	
+        	// transfer to target
+        	try {
+        		serverTarget.receiveFileFromInputStream(inputStreamSource, targetFile, true);
+        	} catch (Exception ex) {
+        		code = 500;
+        		throw new Exception("Error while uploading to target \"" + targetFile + "\". " + ex);
+        	}
+        	
+        	// delete the source file if needed
+        	if (transferMode.equalsIgnoreCase("move")) {
+            	try {
+            		serverSource.deleteFile(sourceFile);
+            	} catch (Exception ex) {
+            		throw new Exception("The file was copied to target successfully but it failed to be deleted on source. " + ex);
+            	}
+        	}
+        	
+    	} catch (Exception ex) {
+    		exception = ex;
+    	}
+    	
+    	// cleanup
+    	if (inputStreamSource != null) { try { inputStreamSource.close(); } catch (Exception ex) { } }
+    	if (serverSource != null) { try { serverSource.close(); } catch (Exception ex) { } }
+    	if (serverTarget != null) { try { serverTarget.close(); } catch (Exception ex) { } }
+    	
+    	// result
+    	ZResult result = new ZResult();
+    	if (exception == null) {
+    		result = ZResult.OK_200("{\"message\":\"File transfer completed without errors.\"}");
+    	} else {
+    		JsonObject o = new JsonObject();
+    		o.addProperty("message", exception + "");
+    		result = new ZResult(); result.statusCode = code; result.content = o.toString();
+    	}
+    	return result;
+    }
+
+	public static ZResult sync_delete(String workspace, String server, String file) {
+    	Exception exception = null;
+    	int code = 200;
+    	
+    	FileServer fserv = null;
+    	
+    	try {
+    		
+    		// retrieve sites
+        	HashMap<String, Site> allSites = null;
+        	try {
+        		allSites = mapSites();
+        		code = 500;
+        	} catch (Exception ex) {
+        		throw new Exception("Error retrieving servers information from database. " + ex);
+        	}
+        	
+        	// connect, login
+        	try {
+        		Site site = allSites.get(server);
+        		if (site == null) { throw new Exception("Error retrieving servers information from database. The server \"" + server + "\" could not be found on workspace \"" + workspace + "\"."); }
+        		if (!site.workspace.equals(workspace)) { throw new Exception("Error retrieving servers information from database. The server \"" + server + "\" could not be found on workspace \"" + workspace + "\"."); }
+        		fserv = IFileServer.createServer(site);
+        		fserv.open();
+        	} catch (Exception ex) {
+        		code = 500;
+        		throw new Exception("Error connecting to server \"" + server + "\". " + ex);
+        	}
+        	
+        	// delete the file
+        	try {
+        		fserv.deleteFile(file);
+        	} catch (Exception ex) {
+        		throw new Exception("Failed to delete file \"" + file + "\". " + ex);
+        	}
+        	
+    	} catch (Exception ex) {
+    		exception = ex;
+    	}
+    	
+    	// cleanup
+    	if (fserv != null) { try { fserv.close(); } catch (Exception ex) { } }
+    	
+    	// result
+    	ZResult result = new ZResult();
+    	if (exception == null) {
+    		result = ZResult.OK_200("{\"message\":\"File was deleted.\"}");
+    	} else {
+    		JsonObject o = new JsonObject();
+    		o.addProperty("message", exception + "");
+    		result = new ZResult(); result.statusCode = code; result.content = o.toString();
+    	}
+    	return result;
+	}
+	
+    public static void main(String[] args) throws Exception {
+    	
+    	String workspace = "default";
+    	
+    	String transferMode = "MOVE";
+    	
+    	String sourceServer = "rose-bank-payment";
+    	String sourceFile = "/BankPayment_test/SCB_CrossBorder/inbound/test/BAY_BAY_D_BAY8102_01-10Apr23_TEST_20230606-223703-471.txt";
+    	
+    	String targetServer = "rose-bank-payment";
+    	String targetFile = "/BankPayment_test/SCB_CrossBorder/inbound/test/Archive/BAY_BAY_D_BAY8102_01-10Apr23_TEST_20230606-223703-471.txt.arc";
+    	
+    	/*String targetServer = "dcloud-sftp";
+    	String targetFile = "/Test/test-zparinthornk/BAY_BAY_D_BAY8102_01-10Apr23_TEST_20230606-223703-471.txt";*/
+    	
+    	ZResult result = sync_transfer(workspace, transferMode, sourceServer, sourceFile, targetServer, targetFile);
+    	OL.sln(result.statusCode);
+    	OL.sln(result.content);
+    }
 }
