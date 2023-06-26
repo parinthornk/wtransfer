@@ -2,14 +2,6 @@
 <api context="/wtransfer" name="a003" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="DELETE POST PATCH GET">
         <inSequence>
-		
-		
-			
-			<header name="Access-Control-Allow-Origin" value="*" scope="transport" action="set"/>
-			<header name="Access-Control-Allow-Headers" value="origin, x-requested-with, accept, content-type, authorization, x-apikey, app-name, Authorization_Type, x-service-name, content-disposition" scope="transport" action="set"/>
-			<header name="Access-Control-Max-Age" value="3628800" scope="transport" action="set"/>
-			<header name="Access-Control-Allow-Methods" value="*" scope="transport" action="set"/>
-			
             <googleBooks.listVolume/>
             <respond/>
         </inSequence>
