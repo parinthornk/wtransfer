@@ -51,6 +51,7 @@ public class ZConnector {
 		public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss";
 		
 		public static final long MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+		public static final String CUSTOM_FILE_SERVER_ENDPOINT = "http://127.0.0.1:62580/custom-file-server/site-operations";
 	}
 	
 	public static class ZResult {

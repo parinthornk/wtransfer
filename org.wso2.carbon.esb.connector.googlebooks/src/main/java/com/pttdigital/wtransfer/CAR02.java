@@ -1003,21 +1003,6 @@ public class CAR02 {
 	
     public static void main(String[] args) throws Exception {
     	
-    	String workspace = "default";
     	
-    	String transferMode = "MOVE";
-    	
-    	String sourceServer = "rose-bank-payment";
-    	String sourceFile = "/BankPayment_test/SCB_CrossBorder/inbound/test/BAY_BAY_D_BAY8102_01-10Apr23_TEST_20230606-223703-471.txt";
-    	
-    	String targetServer = "rose-bank-payment";
-    	String targetFile = "/BankPayment_test/SCB_CrossBorder/inbound/test/Archive/BAY_BAY_D_BAY8102_01-10Apr23_TEST_20230606-223703-471.txt.arc";
-    	
-    	/*String targetServer = "dcloud-sftp";
-    	String targetFile = "/Test/test-zparinthornk/BAY_BAY_D_BAY8102_01-10Apr23_TEST_20230606-223703-471.txt";*/
-    	
-    	ZResult result = sync_transfer(workspace, transferMode, sourceServer, sourceFile, targetServer, targetFile);
-    	OL.sln(result.statusCode);
-    	OL.sln(result.content);
     }
 }

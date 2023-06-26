@@ -51,6 +51,8 @@ public interface IFileServer {
 	public void deleteFile(String fileName) throws Exception;
 	public void move(String fileSource, String fileNameTarget) throws Exception;
 	
+	public void move_external(String localFilePath, String transferMode, String remoteIp, int remotePort, String remoteProtocol, String remoteUser, String remotePass, String remoteKeyPath, String remoteFileName) throws Exception;
+	
 	public static abstract class FileServer implements IFileServer {
 		public String host;
 		public int port;
@@ -262,6 +264,12 @@ public interface IFileServer {
 			// TODO Auto-generated method stub
 			sftpChannel.rm(fileName);
 		}
+
+		@Override
+		public void move_external(String localFilePath, String transferMode, String remoteIp, int remotePort, String remoteProtocol, String remoteUser, String remotePass, String remoteKeyPath, String remoteFileName) throws Exception {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 	
 	// TODO: FTP
@@ -442,6 +450,12 @@ public interface IFileServer {
 				ftpClient.changeToParentDirectory();
 			}
 		}
+
+		@Override
+		public void move_external(String localFilePath, String transferMode, String remoteIp, int remotePort, String remoteProtocol, String remoteUser, String remotePass, String remoteKeyPath, String remoteFileName) throws Exception {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 	
 	// TODO: FTPS
@@ -610,6 +624,12 @@ public interface IFileServer {
 			for (int i = 0; i < 3; i++) {
 				ftpsClient.changeToParentDirectory();
 			}
+		}
+
+		@Override
+		public void move_external(String localFilePath, String transferMode, String remoteIp, int remotePort, String remoteProtocol, String remoteUser, String remotePass, String remoteKeyPath, String remoteFileName) throws Exception {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 }

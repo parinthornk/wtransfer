@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template name="listVolume" xmlns="http://ws.apache.org/ns/synapse">
     <sequence>
+        <property name="DISABLE_CHUNKING" scope="axis2" type="STRING" value="true"/>
         <class name="org.wso2.carbon.esb.connector.googleBooksConnector">
             <property name="Operation" value="controller"/>
         </class>
@@ -11,6 +12,8 @@
                 <arg evaluator="xml" expression="$ctx:wresponse"/>
             </args>
         </payloadFactory>
+        <!--header expression="$ctx:cntntlngth" name="Content-Length" scope="transport"/-->
+        <!--header expression="$ctx:cntntlngth" name="Content-Length02" scope="transport"/-->
         <respond/>
     </sequence>
 </template>
