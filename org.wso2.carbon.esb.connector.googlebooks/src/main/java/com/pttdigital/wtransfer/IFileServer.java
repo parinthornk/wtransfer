@@ -49,7 +49,7 @@ public interface IFileServer {
 	public void createDirectory(String folder) throws Exception;
 	public void deleteDirectory(String folder) throws Exception;
 	public void deleteFile(String fileName) throws Exception;
-	public void move(String fileSource, String fileNameTarget) throws Exception;
+	public void move_internal(String fileSource, String fileNameTarget) throws Exception;
 	
 	public void move_external(String localFilePath, String transferMode, String remoteIp, int remotePort, String remoteProtocol, String remoteUser, String remotePass, String remoteKeyPath, String remoteFileName) throws Exception;
 	
@@ -68,6 +68,12 @@ public interface IFileServer {
 	}
 	
 	public static IFileServer.FileServer createServer(Site site) throws Exception {
+		
+		/*// custom site
+		if (site.description.contains("896126e3-c6df-4e9f-bedc-03378f3e41fe")) {
+			
+		}*/
+		
 		if (site.protocol.equalsIgnoreCase("sftp")) {
 			//OL.sln("type: ServerSFTP");
 			return new IFileServer.ServerSFTP(site.host, site.port, site.username, site.password, site.keyPath);
@@ -80,6 +86,7 @@ public interface IFileServer {
 			//OL.sln("type: ServerFTPS");
 			return new IFileServer.ServerFTPS(site.host, site.port, site.username, site.password);
 		}
+		
 		throw new Exception("Failed to create FileServer: unsupported protocol \"" + site.protocol + "\".");
 	}
 	
@@ -222,7 +229,7 @@ public interface IFileServer {
 		}
 
 		@Override
-		public void move(String absFileNameSource, String absFileNameTarget) throws SftpException {
+		public void move_internal(String absFileNameSource, String absFileNameTarget) throws SftpException {
 			OL.sln("sftpChannel.rename("+absFileNameSource+", "+absFileNameTarget+");");
 			sftpChannel.rename(absFileNameSource, absFileNameTarget);
 		}
@@ -411,7 +418,7 @@ public interface IFileServer {
 		}
 
 		@Override
-		public void move(String absFileNameSource, String absFileNameTarget) throws Exception {
+		public void move_internal(String absFileNameSource, String absFileNameTarget) throws Exception {
 			ftpClient.rename(absFileNameSource, absFileNameTarget);
 		}
 
@@ -458,7 +465,6 @@ public interface IFileServer {
 		}
 	}
 	
-	// TODO: FTPS
 	public static class ServerFTPS extends IFileServer.FileServer {
 		
 		private FTPSClient ftpsClient;
@@ -470,66 +476,21 @@ public interface IFileServer {
 		@Override
 		public void open() throws Exception {
 			
-			
-			
 			ftpsClient = new FTPSClient();
-
+			
 			ftpsClient.setDefaultTimeout(25000);
 			ftpsClient.setConnectTimeout(25000);
+			ftpsClient.connect(host, port);
+			
+			if (ftpsClient.login(username, password)) {
 
-            ftpsClient.connect(host, port);
-            int replyCode = ftpsClient.getReplyCode();
-            if (!FTPReply.isPositiveCompletion(replyCode)) {
-                throw new Exception("FTP server refused connection.");
-            }
-
-            // Authenticate with the server
-            OL.sln("ftpsClient.login("+username+", "+password+")");
-            if (!ftpsClient.login(username, password)) {
-                throw new Exception("FTP login failed.");
-            }
-
-            // Set binary file transfer mode
-            ftpsClient.setFileType(FTP.BINARY_FILE_TYPE);
-            
-            ftpsClient.enterLocalPassiveMode();
-			
-			OL.sln("ssssss");
-			
-			
-			
-			
-			
-			
-			
-		}
-
-		@Override
-		public InputStream getInputStream(String absFilePath) throws Exception {
-			return ftpsClient.retrieveFileStream(absFilePath);
-		}
-
-		@Override
-		public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception {
-			
-			goToParentDir();
-			
-			String p = targetFileName;
-			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
-			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
-			while (p.contains("//")) { p = p.replace("//", "/"); }
-			String[] split = p.split("/");
-			
-			for (int i=0;i<split.length - 1;i++) {
-
-				ftpsClient.changeWorkingDirectory(split[i]);
+				ftpsClient.setFileType(FTP.BINARY_FILE_TYPE);
+				
+				ftpsClient.enterLocalPassiveMode();
+			} else {
+				
+				throw new Exception("Failed to login FTPSClient, host[" + host + "], port[" + port + "], username[" + username + "], password[" + password + "].");
 			}
-			
-			if (!ftpsClient.storeFile(split[split.length - 1], inputStream)) {
-				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpsClient.getReplyString());
-			}
-			
-			ftpsClient.changeToParentDirectory();
 		}
 
 		@Override
@@ -546,6 +507,11 @@ public interface IFileServer {
 				Item.Info info = new Item.Info(f.getName(), f.getSize(), f.isDirectory(), new Timestamp(f.getTimestamp().getTimeInMillis() + 0 * 3600 * 1000));
 				arr.add(Item.Info.toDictionary(info));
 			}
+			
+			for (int i=0;i<10;i++) {
+				ftpsClient.changeToParentDirectory();
+			}
+			
 			return new Gson().fromJson(ZConnector.ConvertToJsonString(arr), JsonArray.class);
 		}
 
@@ -572,7 +538,7 @@ public interface IFileServer {
 				String dir = split[i];
 				if (!ftpsClient.changeWorkingDirectory(dir)) {
 					int mkd = ftpsClient.mkd(dir);
-					
+					OL.sln("\t" + "ftpsClient.mkd(\""+dir+"\") ---> " + mkd);
 					if (mkd > 499) {
 						throw new Exception("Error creating directory \"" + dir + "\", " + ftpsClient.getReplyString());
 					}
@@ -585,7 +551,7 @@ public interface IFileServer {
 		}
 
 		@Override
-		public void move(String absFileNameSource, String absFileNameTarget) throws Exception {
+		public void move_internal(String absFileNameSource, String absFileNameTarget) throws Exception {
 			ftpsClient.rename(absFileNameSource, absFileNameTarget);
 		}
 
@@ -602,7 +568,6 @@ public interface IFileServer {
 
 		@Override
 		public void deleteDirectory(String folder) throws Exception {
-			// TODO Auto-generated method stub
 			ftpsClient.dele(folder);
 		}
 
@@ -630,6 +595,35 @@ public interface IFileServer {
 		public void move_external(String localFilePath, String transferMode, String remoteIp, int remotePort, String remoteProtocol, String remoteUser, String remotePass, String remoteKeyPath, String remoteFileName) throws Exception {
 			// TODO Auto-generated method stub
 			
+		}
+
+		@Override
+		public InputStream getInputStream(String absFilePath) throws Exception {
+			// TODO Auto-generated method stub
+			return ftpsClient.retrieveFileStream(absFilePath);
+		}
+
+		@Override
+		public void receiveFileFromInputStream(InputStream inputStream, String targetFileName, boolean replace) throws Exception {
+
+			goToParentDir();
+			
+			String p = targetFileName;
+			while (p.startsWith("/")) { p = p.substring(1, p.length()); }
+			while (p.endsWith("/")) { p = p.substring(0, p.length() - 1); }
+			while (p.contains("//")) { p = p.replace("//", "/"); }
+			String[] split = p.split("/");
+			
+			for (int i=0;i<split.length - 1;i++) {
+
+				ftpsClient.changeWorkingDirectory(split[i]);
+			}
+			
+			if (!ftpsClient.storeFile(split[split.length - 1], inputStream)) {
+				throw new Exception("Failed uploading to \"" + split[split.length - 1] + "\" on \"" + host + "\", " + ftpsClient.getReplyString());
+			}
+			
+			ftpsClient.changeToParentDirectory();
 		}
 	}
 }

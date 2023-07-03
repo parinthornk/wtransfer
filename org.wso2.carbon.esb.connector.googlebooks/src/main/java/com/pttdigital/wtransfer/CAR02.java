@@ -404,7 +404,7 @@ public class CAR02 {
 								server.createDirectory(folderArchive);
 								//OL.sln("server.createDirectory("+folderArchive+");");
 							}
-							server.move(folder + "/" + fileName, folderArchive + "/" + fileNameArchive);
+							server.move_internal(folder + "/" + fileName, folderArchive + "/" + fileNameArchive);
 							// -------------------------------------------------------------------------------------------- //
 							String arc_name_key = siteName + ":" + folder + ":" + fileName;
 							mapFileArcName.put(arc_name_key, fileNameArchive);
@@ -695,22 +695,12 @@ public class CAR02 {
 			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("ROSE_TAS_OILLDDPost_CS-BC_TASH203-BS_ERP_ECP100-77"));
 			System.out.println("triggered: " + triggered.size());
 			
-			//Thread.sleep(100000);
-			
 			// all sites
 			HashMap<String, Site> allSites = mapSites();
 			System.out.println("allSites: " + allSites.size());
 			
 			// list item in retry mode
 			HashMap<String, ArrayList<String>> itemsToRetry = getItemsForRetry(allSchedules, allSites);
-			
-			if (new File("local.txt").exists()) {
-				System.exit(0);
-			}
-			
-			/*// all existing sessions for what? // TODO, limit only previous 24 hour?
-			HashMap<Long, Session> allExistingSessions = mapSessions();
-			System.out.println("allExistingSessions: " + allExistingSessions.size());*/
 			
 			// open server connections concurrently
 			openServers(triggered, allSites);
@@ -848,7 +838,7 @@ public class CAR02 {
     	return constructItemsMessage(items, allSchedules, allSites, mapSessions, false);
 	}
     
-    public static ZResult sync_transfer(String workspace, String transferMode, String sourceServer, String sourceFile, String targetServer, String targetFile) {
+    /*public static ZResult sync_transfer(String workspace, String transferMode, String sourceServer, String sourceFile, String targetServer, String targetFile) {
     	Exception exception = null;
     	int code = 200;
     	
@@ -908,6 +898,29 @@ public class CAR02 {
         		throw new Exception("Error acquiring InputStream on source file \"" + sourceFile + "\". " + ex);
         	}
         	
+        	// check if target directory if not exists
+        	boolean targetDirExists = false;
+        	String targetFolder = "";
+        	try {
+        		String[] tmp = targetFile.split("/");
+        		String targetFileName = tmp[tmp.length - 1];
+        		targetFolder = targetFile.substring(0, targetFile.length() - targetFileName.length() - 1);
+        		OL.sln("targetFolder: " + targetFolder);
+        		targetDirExists = serverTarget.directoryExists(targetFile);
+        	} catch (Exception ex) {
+        		code = 500;
+        		throw new Exception("Error while checking existence of target folder: \"" + targetFolder + "\". " + ex);
+        	}
+        	
+        	// create target folder if not exists
+        	if (!targetDirExists) {
+        		try {
+        			serverTarget.createDirectory(targetFolder);
+        		} catch (Exception ex) {
+        			throw new Exception("Error creating target folder \"" + targetFolder + "\". " + ex);
+        		}
+        	}
+        	
         	// transfer to target
         	try {
         		serverTarget.receiveFileFromInputStream(inputStreamSource, targetFile, true);
@@ -944,7 +957,7 @@ public class CAR02 {
     		result = new ZResult(); result.statusCode = code; result.content = o.toString();
     	}
     	return result;
-    }
+    }*/
 
 	public static ZResult sync_delete(String workspace, String server, String file) {
     	Exception exception = null;

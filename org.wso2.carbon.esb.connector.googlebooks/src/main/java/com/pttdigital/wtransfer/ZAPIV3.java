@@ -28,48 +28,11 @@ public class ZAPIV3 {
 	
     public static void main(String[] args) throws Exception {
     	
+    	HashMap<String, String> query = new HashMap<String, String>();
+    	query.put("path", "/");
+    	ZResult result = process("/workspaces/default/sites/dcloud-sftp/objects", "get", query, null, (byte[])null);
+    	OL.sln(result.content);
     	
-    	String h = "7b227472616e736665724d6f6465223a2022434f5059222c22736f75726365536572766572223a202264636c6f75642d73667470222c22736f7572636546696c65223a20222f546573742f5a546573744d6f766546696c65312f536f757263652f7465737431e0b897e0b894e0b8aae0b8ade0b89ae0b984e0b897e0b8a22e747874222c22746172676574536572766572223a202264636c6f75642d73667470222c2274617267657446696c65223a20222f546573742f5a546573744d6f766546696c65322f5461726765742f7465737431e0b897e0b894e0b8aae0b8ade0b89ae0b984e0b897e0b8a22e747874227d";
-    	//String h = "485454502f312e31203230322041636365707465640d0a616374697669747969643a2030353539626432372d363065372d343830362d623039342d6232326438363038313963320d0a4163636573732d436f6e74726f6c2d4578706f73652d486561646572733a200d0a4163636573732d436f6e74726f6c2d416c6c6f772d4f726967696e3a202a0d0a4163636573732d436f6e74726f6c2d416c6c6f772d4d6574686f64733a20504f53540d0a4163636573732d436f6e74726f6c2d416c6c6f772d486561646572733a20617574686f72697a6174696f6e2c4163636573732d436f6e74726f6c2d416c6c6f772d4f726967696e2c436f6e74656e742d547970652c534f4150416374696f6e2c6170696b65792c496e7465726e616c2d4b65792c417574686f72697a6174696f6e0d0a436f6e74656e742d547970653a206170706c69636174696f6e2f6f637465742d73747265616d0d0a446174653a204d6f6e2c203236204a756e20323032332031313a31333a303120474d540d0a5472616e736665722d456e636f64696e673a206368756e6b65640d0a0a";
-    	
-    	
-    	String xxx = "";
-    	byte[] bs = new byte[h.length()/2];
-    	for (int i=0;i<h.length();i+=2) {
-    		//OL.sln(h.substring(i, i + 2));
-    		
-    		String sub = h.substring(i, i + 2);
-    		OL.sln(sub);
-    		
-    		long l = Long.parseLong(sub, 16);
-    		
-    		char c = (char)l;
-    		xxx += c;
-    		//OL.sln(c);
-    		
-    		bs[i/2] = (byte)l;
-    	}
-    	
-    	
-    	
-    	
-    	
-    	
-    	String asciiEncodedString = new String(bs, StandardCharsets.UTF_8);
-    	OL.sln(asciiEncodedString);
-    	
-    	
-    	//OL.sln("ทดสอบ");
-    	
-    	
-    	/*HashMap<String, String> query = new HashMap<String, String>();
-    	query.put("status", "WAITING_FOR_RETRY");
-    	
-    	ZResult result = process("/items", "get", query, null, (byte[])null);
-    	JsonArray arr = new Gson().fromJson(result.content, JsonObject.class).get("list").getAsJsonArray();
-    	
-    	OL.sln(arr.size());*/
-    	//CAR02.loop();
     }
     
 	private static boolean matchPath(String requested, String template) {
@@ -189,6 +152,7 @@ public class ZAPIV3 {
 				JsonElement e = DB.executeGet(sql);
 				return ZResult.OK_200(e.toString());
 			}
+			
 			if (match(path, method, "/workspaces/*/sites/*/objects, get")) {
 				
 				// abs path
@@ -203,66 +167,55 @@ public class ZAPIV3 {
 				while (absolutePath.contains("%20")) { absolutePath = absolutePath.replace("%20", " "); }
 				
 				String workspace = getFromPathParamsAsString(path, 1);
+				
+				if (!workspace.equalsIgnoreCase("default")) {
+					return ZResult.ERROR_500(new Exception("workspace must be set to \"default\"."));
+				}
+				
 				String site = getFromPathParamsAsString(path, 3);
-				String sql = DB.sqlGetInWorkspace(c, site, workspace);
-				JsonElement e = DB.executeGet(sql);
+				String session_id = "";
 				
-				IFileServer server = null;
-				try {
-					
-					
-					Site s = (Site) DB.parse(Site.class, e.getAsJsonObject());
-					server = IFileServer.createServer(s);
-					server.open();
-					
-					System.out.println("server.listObjects(" + absolutePath + ");");
-					JsonArray array = server.listObjects(absolutePath);
-					if (server != null) { server.close(); }
-					ZResult result = new ZResult();
-					result.statusCode = 200;
-					result.content = "{\"count\":" + array.size() + ", \"objects\": " + array + "}";
-					return result;
-				} catch (Exception ex) {
-					if (server != null) { server.close(); }
-					throw ex;
+				// open session
+				{
+					try {
+						JsonObject p1 = new JsonObject();
+						p1.addProperty("action", "server.open");
+						p1.addProperty("site", site);
+						session_id = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1).getAsJsonObject().get("id").getAsString();						
+					} catch(Exception ex) { }
 				}
-			}
-			
-			if (match(path, method, "/workspaces/*/sites/*/objects, post")) {
 				
-				// abs path
-				String absolutePath = "/";
-				if (query == null) {
-				} else if (!query.containsKey("path")) {
-				} else {
-					absolutePath = query.get("path");
-					while (absolutePath.startsWith("/")) { absolutePath = absolutePath.substring(1, absolutePath.length()); }
-					absolutePath = "/" + absolutePath;
+				if (session_id.length() == 0) {
+					throw new Exception("Failed to create CUSTOM_FILE_SERVER_ENDPOINT session.");
 				}
-				while (absolutePath.contains("%20")) { absolutePath = absolutePath.replace("%20", " "); }
 				
-				String workspace = getFromPathParamsAsString(path, 1);
-				String site = getFromPathParamsAsString(path, 3);
-				String sql = DB.sqlGetInWorkspace(c, site, workspace);
-				JsonElement e = DB.executeGet(sql);
-				
-				IFileServer server = null;
-				try {
-					Site s = (Site) DB.parse(Site.class, e.getAsJsonObject());
-					server = IFileServer.createServer(s);
-					server.open();
-					
-					System.out.println("server.createDirectory(" + absolutePath + ");");
-					server.createDirectory(absolutePath);
-					if (server != null) { server.close(); }
-					ZResult result = new ZResult();
-					result.statusCode = 201;
-					result.content = "";
-					return result;
-				} catch (Exception ex) {
-					if (server != null) { server.close(); }
-					throw ex;
+				// list files
+				JsonObject list = null;
+				{
+					try {
+						JsonObject p2 = new JsonObject();
+						p2.addProperty("action", "object.list");
+						p2.addProperty("id", session_id);
+						p2.addProperty("directory", absolutePath);
+						list = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p2).getAsJsonObject();
+					} catch(Exception ex) { }
 				}
+				
+				// close session
+				{
+					try {
+						JsonObject p3 = new JsonObject();
+						p3.addProperty("action", "server.close");
+						p3.addProperty("id", session_id);
+						Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p3);
+					} catch (Exception ex) { }
+				}
+				
+				if (list == null) {
+					throw new Exception("Failed to list objects using CUSTOM_FILE_SERVER_ENDPOINT.");
+				}
+				
+				return ZResult.OK_200(list.toString());
 			}
 			
 			if (match(path, method, "/workspaces/*/sites/*, patch")) {
@@ -755,7 +708,14 @@ public class ZAPIV3 {
 		    	String sourceFile = null; try { sourceFile = o.get("sourceFile").getAsString(); } catch (Exception ex) { } if (sourceFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceFile\" is required.")); }
 		    	String targetServer = null; try { targetServer = o.get("targetServer").getAsString(); } catch (Exception ex) { } if (targetServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetServer\" is required.")); }
 		    	String targetFile = null; try { targetFile = o.get("targetFile").getAsString(); } catch (Exception ex) { } if (targetFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetFile\" is required.")); }
-				return CAR02.sync_transfer(workspace, transferMode, sourceServer, sourceFile, targetServer, targetFile);
+		    	
+		    	// call service http://127.0.0.1:62580/custom-file-server/site-operations
+		    	o.addProperty("action", "transfer");
+		    	
+		    	JsonElement e = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, o);
+		    	return ZResult.OK_200(e.toString());
+		    	
+				//return CAR02.sync_transfer(workspace, transferMode, sourceServer, sourceFile, targetServer, targetFile);
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> sync_delete
 			if (match(path, method, "/workspaces/*/synchronous-operations/delete, post")) {
