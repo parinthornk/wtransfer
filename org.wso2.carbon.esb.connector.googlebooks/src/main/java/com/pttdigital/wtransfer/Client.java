@@ -109,16 +109,25 @@ public class Client {
 	}
 
 	public static void addItemLog(Item item, Log.Type t, String title, String body) {
-		try {
-			LogItem log = new LogItem();
-			log.id = 0;
-			log.item = item.name;
-			log.logType = t.toString().toUpperCase();
-			log.title = title;
-			log.body = body;
-			getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", "post", null, new Gson().fromJson(DB.toJsonString(log), JsonObject.class));
-		} catch (Exception e) {
-			e.printStackTrace();
+		int attempts = 10;
+		for (int i=0;i<attempts;i++) {
+			try {
+				LogItem log = new LogItem();
+				log.id = 0;
+				log.item = item.name;
+				log.logType = t.toString().toUpperCase();
+				log.title = title;
+				log.body = body;
+				getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", "post", null, new Gson().fromJson(DB.toJsonString(log), JsonObject.class));
+				return;
+			} catch (Exception e) {
+				if (i < attempts - 1) {
+					try { Thread.sleep(200); } catch (Exception e1) { }
+					continue;
+				} else {
+					return;
+				}
+			}
 		}
 	}
 

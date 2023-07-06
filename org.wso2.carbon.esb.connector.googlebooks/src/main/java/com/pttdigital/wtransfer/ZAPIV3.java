@@ -594,24 +594,35 @@ public class ZAPIV3 {
 		    	
 		    	String schedule_name = new Gson().fromJson(resultSession.content, JsonObject.class).get("schedule").getAsString();
 		    	ZResult resultSchedule = process("/workspaces/" + workspace + "/schedules/" + schedule_name, "get", null, null, (byte[])null);
-		    	Schedule schedule = (Schedule) DB.parse(Schedule.class, new Gson().fromJson(resultSchedule.content, JsonObject.class));
+		    	//Schedule schedule = (Schedule) DB.parse(Schedule.class, new Gson().fromJson(resultSchedule.content, JsonObject.class));
 
 		    	String site_source_name = new Gson().fromJson(resultSchedule.content, JsonObject.class).get("siteSource").getAsString();
 		    	String site_target_name = new Gson().fromJson(resultSchedule.content, JsonObject.class).get("siteTarget").getAsString();
 		    	
 		    	ZResult site_source = process("/workspaces/" + workspace + "/sites/" + site_source_name, "get", null, null, (byte[])null);
 		    	ZResult site_target = process("/workspaces/" + workspace + "/sites/" + site_target_name, "get", null, null, (byte[])null);
-		    	Site siteSource = (Site) DB.parse(Site.class, new Gson().fromJson(site_source.content, JsonObject.class));
-		    	Site siteTarget = (Site) DB.parse(Site.class, new Gson().fromJson(site_target.content, JsonObject.class));
+		    	//Site siteSource = (Site) DB.parse(Site.class, new Gson().fromJson(site_source.content, JsonObject.class));
+		    	//Site siteTarget = (Site) DB.parse(Site.class, new Gson().fromJson(site_target.content, JsonObject.class));
 		    	
 		    	
 		    	//OL.sln(resultSchedule.content);
 		    	Client.addItemLog(item, Log.Type.INFO, "RE-EXECUTION", "The item is re-executed manually.");
 		    	
 		    	// Site source, Site target, Schedule schedule, Item item
-		    	CAR03.do_move(siteSource, siteTarget, schedule, item);
 		    	
-		    	return ZResult.OK_204();
+		    	//CAR03.(siteSource, siteTarget, schedule, item);
+		    	
+		    	
+		    	
+		    	JsonObject o2 = new JsonObject();
+		    	o2.add("item", new Gson().fromJson(resultItem.content, JsonObject.class));
+		    	o2.add("session", new Gson().fromJson(resultSession.content, JsonObject.class));
+		    	o2.add("schedule", new Gson().fromJson(resultSchedule.content, JsonObject.class));
+		    	o2.add("siteSource", new Gson().fromJson(site_source.content, JsonObject.class));
+		    	o2.add("siteTarget", new Gson().fromJson(site_target.content, JsonObject.class));
+		    	CAR03.move_custom(o2.toString());
+		    	
+		    	return ZResult.OK_200("{\"message\":\"OK\"}");
 				
 			}
 			if (match(path, method, "/workspaces/*/sessions/*/items/*, patch")) {
@@ -713,7 +724,14 @@ public class ZAPIV3 {
 		    	o.addProperty("action", "transfer");
 		    	
 		    	JsonElement e = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, o);
-		    	return ZResult.OK_200(e.toString());
+		    	
+		    	String ret = e.toString();
+		    	
+		    	while (ret.contains("java.lang.Exception: ")) {ret = ret.replace("java.lang.Exception: ", "Exception: ");}
+		    	while (ret.contains("http://127.0.0.1:62580")) {ret = ret.replace("http://127.0.0.1:62580", "");}
+		    	while (ret.contains("http://10.224.143.44:8290/wtransfer/workspaces/default")) {ret = ret.replace("http://10.224.143.44:8290/wtransfer/workspaces/default", "");}
+		    	
+		    	return ZResult.OK_200(ret);
 		    	
 				//return CAR02.sync_transfer(workspace, transferMode, sourceServer, sourceFile, targetServer, targetFile);
 			}

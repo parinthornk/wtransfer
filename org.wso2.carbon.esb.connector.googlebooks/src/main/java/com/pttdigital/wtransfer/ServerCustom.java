@@ -26,32 +26,55 @@ public class ServerCustom extends IFileServer.FileServer {
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-		
+		try {
+			JsonObject p1 = new JsonObject();
+			p1.addProperty("action", "server.close");
+			p1.addProperty("id", sessionId);
+			Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1);
+		} catch (Exception e) { }
 	}
 
 	@Override
 	public JsonArray listObjects(String folder) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		JsonObject p1 = new JsonObject();
+		p1.addProperty("action", "object.list");
+		p1.addProperty("id", sessionId);
+		p1.addProperty("directory", folder);
+		return Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1).getAsJsonObject().get("objects").getAsJsonArray();
 	}
 
 	@Override
 	public boolean fileExists(String file) throws Exception {
-		// TODO Auto-generated method stub
-		return false;
+		JsonObject p1 = new JsonObject();
+		p1.addProperty("action", "file.exists");
+		p1.addProperty("id", sessionId);
+		p1.addProperty("file", file);
+		return Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1).getAsJsonObject().get("exists").getAsBoolean();
 	}
 
 	@Override
 	public boolean directoryExists(String folder) throws Exception {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			JsonObject p1 = new JsonObject();
+			p1.addProperty("action", "directory.exists");
+			p1.addProperty("id", sessionId);
+			p1.addProperty("directory", folder);
+			return Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1).getAsJsonObject().get("exists").getAsBoolean();			
+		} catch (Exception ex) {
+			if (ex.getMessage().contains("Received HTTP error: 404")) {
+				return false;
+			}
+			throw ex;
+		}
 	}
 
 	@Override
 	public void createDirectory(String folder) throws Exception {
-		// TODO Auto-generated method stub
-		
+		JsonObject p1 = new JsonObject();
+		p1.addProperty("action", "directory.create");
+		p1.addProperty("id", sessionId);
+		p1.addProperty("directory", folder);
+		Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1);
 	}
 
 	@Override
@@ -68,8 +91,12 @@ public class ServerCustom extends IFileServer.FileServer {
 
 	@Override
 	public void move_internal(String fileSource, String fileNameTarget) throws Exception {
-		// TODO Auto-generated method stub
-		
+		JsonObject p1 = new JsonObject();
+		p1.addProperty("action", "file.move_internal");
+		p1.addProperty("id", sessionId);
+		p1.addProperty("sourceFile", fileSource);
+		p1.addProperty("targetFile", fileNameTarget);
+		Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1);
 	}
 
 	@Override

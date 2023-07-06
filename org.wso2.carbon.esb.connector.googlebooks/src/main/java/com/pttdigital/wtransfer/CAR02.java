@@ -808,6 +808,9 @@ public class CAR02 {
     	query.put("status", "WAITING_FOR_RETRY");
     	ZResult result = ZAPIV3.process("/items", "get", query, null, (byte[])null);
     	JsonArray arr = new Gson().fromJson(result.content, JsonObject.class).get("list").getAsJsonArray();
+    	
+    	//OL.sln(arr.size());
+    	
     	ArrayList<Long> sessionsAssociated = new ArrayList<Long>();
     	ArrayList<Item> items = new ArrayList<Item>();
     	for (JsonElement e : arr) {
@@ -1015,6 +1018,105 @@ public class CAR02 {
 	}
 	
     public static void main(String[] args) throws Exception {
+    	
+    	
+
+		
+		/*// all schedules
+		HashMap<String, Schedule> allSchedules = mapSchedules();
+		System.out.println("allSchedules: " + allSchedules.size());
+		
+		// all sites
+		HashMap<String, Site> allSites = mapSites();
+		System.out.println("allSites: " + allSites.size());
+		
+		// list item in retry mode
+		HashMap<String, ArrayList<String>> itemsToRetry = getItemsForRetry(allSchedules, allSites);
+		
+
+		
+		Set<String> ks = itemsToRetry.keySet();
+		for (String scheduleName : ks) {
+			ArrayList<String> list = itemsToRetry.get(scheduleName);
+			for (String text : list) {
+				try {
+					OL.sln(text);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		}*/
+    	
+    	// /workspaces/*/sessions/*/items/*/re-execute
+    	//ZAPIV3.process("/workspaces/default/sessions/9906059/items/42f48e563638490ea8b2ba798e24fa02/re-execute", "post", null, null, (byte[])null);
+    	
+    	
+    	
+    	
+    	String item = "a833c7ec3a8c4883a976b79794718bf3";
+    	String session = "7569202";
+    	
+    	JsonArray arr = new JsonArray();
+    	arr.add(new Gson().fromJson(ZAPIV3.process("/workspaces/default/sessions/"+session+"/items/"+item+"", "get", null, null, (byte[])null).content, JsonObject.class));
+    	
+    	//OL.sln(arr.size());
+    	
+    	ArrayList<Long> sessionsAssociated = new ArrayList<Long>();
+    	ArrayList<Item> items = new ArrayList<Item>();
+    	for (JsonElement e : arr) {
+    		Item i = (Item) DB.parse(Item.class, e.getAsJsonObject());
+    		
+    		if (!sessionsAssociated.contains(i.session)) {
+    			sessionsAssociated.add(i.session);
+    		}
+    		items.add(i);
+    	}
+    	
+    	if (sessionsAssociated.size() != 0) {
+
+        	String where = ""; for (long l : sessionsAssociated) { where += l + ", "; } where = where.substring(0, where.length() - 2);
+        	JsonArray jSessions = DB.executeList("select * from " + Constant.SCHEMA + ".\"" + Session.class.getSimpleName() + "\" where " + Session.getIdWord() + " in (" + where + ")").getAsJsonObject().get("list").getAsJsonArray();
+        	HashMap<String, Session> mapSessions = new HashMap<String, Session>();
+        	for (JsonElement e : jSessions) {
+        		Session s = (Session) DB.parse(Session.class, e.getAsJsonObject());
+        		mapSessions.put(s.id + "", s);
+        	}
+        	
+        	// all schedules
+    		HashMap<String, Schedule> allSchedules = mapSchedules();
+    		
+    		// all sites
+    		HashMap<String, Site> allSites = mapSites();
+    		
+        	HashMap<String, ArrayList<String>> itemsToRetry = constructItemsMessage(items, allSchedules, allSites, mapSessions, false);
+        	
+
+    		Set<String> ks = itemsToRetry.keySet();
+    		for (String scheduleName : ks) {
+    			ArrayList<String> list = itemsToRetry.get(scheduleName);
+    			for (String text : list) {
+    				try {
+    					OL.sln(text);
+    					
+    					//CAR03.move(text);
+    					
+    				} catch (Exception ex) {
+    					ex.printStackTrace();
+    				}
+    			}
+    		}
+    	}
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
     	
     	
     }

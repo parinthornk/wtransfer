@@ -11,19 +11,20 @@
 </head>
 <body>
 
-<div class="container">
+
+<div style="margin-left:50px;margin-right:50px;">
 
 	<div class="table-responsive">
 		<h3 id="head-schedule"> / <a href="http://localhost:3000/schedules">schedules</a> / <a id="refth001" href="http://localhost:3000/schedules">xxxxxx</a> / <a id="refth002" href="http://localhost:3000/schedules">sessions</a> / <a id="refth003" href="http://localhost:3000/schedules">xxx</a> / <a id="refth004" href="http://localhost:3000/schedules">items</a> / <span id="refth005">xxxxxx</span></h3>
 		<!--p>File Transfer schedules.</p-->
 	  
-		<table style="width:100%" class="table align-middle" id="myTable">
+		<table style="width:100%;font-size: 0.75em;" class="table align-middle" id="myTable">
 		</table>
 		
 		<button type="button" class="btn btn-primary" onclick="re_execute()" id="btn_re_execute" style="margin-bottom:25px; margin-left:0px;">Re-Execute</button>
 		
 		
-		<table id="log-table" class="table table-striped table-hover">
+		<table id="log-table" class="table table-striped table-hover" style="font-size: 0.75em;">
 		</table>
 	</div>
 </div>
@@ -116,7 +117,9 @@ const callAPI = async () => {
 		"modified",
 		"retryQuota",
 		"retryIntervalMs",
-		"fnCallback"
+		"fnCallback",
+		"fileNameArchive",
+		"folderArchive"
 	];
 	
 	const myJson = await response.json();
@@ -208,7 +211,7 @@ const retrive_item_logs = async () => {
 		"folderArchive",
 		"folder",
 		"folderArchive",
-		"fileNameArchive",
+		"folderArchive",
 		"fileNameArchive",
 		"fileNameArchive",
 		"fileNameArchive",
