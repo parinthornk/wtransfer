@@ -69,14 +69,14 @@ internal class Transfer
         string s_logType = logType.ToString();
         string s_title = title.ToString();
 
-        var bytes = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>()
+        var text = Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>()
         {
             { "id", 0 },
             { "item", name },
             { "logType", s_logType },
             { "title", s_title },
             { "body", body },
-        }));
+        });
 
         int attempts = 15;
         int sleep = 200;
@@ -84,7 +84,7 @@ internal class Transfer
         {
             try
             {
-                var response = HttpResponse.GetResponse("post", endpoint + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", null, bytes);
+                var response = HttpResponse.GetResponse("post", endpoint + "/workspaces/" + item.workspace + "/items/" + item.name + "/logs", null, text);
                 if (199 < response.StatusCode && response.StatusCode < 300)
                 {
                     break;
@@ -138,11 +138,11 @@ internal class Transfer
             return;
         }
 
-        var bytes = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>()
+        var text = Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>()
         {
             { "id", 0 },
             { "status", status.ToString().ToUpper() },
-        }));
+        });
 
         int attempts = 15;
         int sleep = 200;
@@ -150,7 +150,7 @@ internal class Transfer
         {
             try
             {
-                var response = HttpResponse.GetResponse("post", endpoint + "/workspaces/" + workspace + "/sessions/" + session + "/items/" + name + "/patch", null, bytes);
+                var response = HttpResponse.GetResponse("post", endpoint + "/workspaces/" + workspace + "/sessions/" + session + "/items/" + name + "/patch", null, text);
 
                 if (199 < response.StatusCode && response.StatusCode < 300)
                 {
@@ -614,12 +614,12 @@ internal class Transfer
             return;
         }
 
-        var bytes = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>()
+        var text = Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>()
         {
             { "timeLatestRetry", t_now.ToString(Settings.DateFormat) },
             { "timeNextRetry", t_nxt.ToString(Settings.DateFormat) },
             { "retryRemaining", retryRemaining },
-        }));
+        });
 
         int attempts = 15;
         int sleep = 200;
@@ -627,7 +627,7 @@ internal class Transfer
         {
             try
             {
-                var response = HttpResponse.GetResponse("post", endpoint + "/workspaces/" + workspace + "/sessions/" + session + "/items/" + name + "/patch", null, bytes);
+                var response = HttpResponse.GetResponse("post", endpoint + "/workspaces/" + workspace + "/sessions/" + session + "/items/" + name + "/patch", null, text);
 
                 if (199 < response.StatusCode && response.StatusCode < 300)
                 {

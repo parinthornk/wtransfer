@@ -13,7 +13,7 @@ namespace WTRANSFER
         public byte[] Content { get; private set; }
         public int StatusCode { get; private set; }
 
-        public static HttpResponse GetResponse(string method, string url, Dictionary<string, object> headers, byte[] bodyRaw)
+        public static HttpResponse GetResponse(string method, string url, Dictionary<string, object> headers, string text)
         {
             HttpResponse httpResponse = null;
             RestClient client = null;
@@ -60,24 +60,16 @@ namespace WTRANSFER
                     request.AddHeader("Content-Type", "application/json");
                 }
 
-                if (bodyRaw != null)
+                if (text != null)
                 {
-                    if (bodyRaw.Length > 0)
+                    if (text.Length > 0)
                     {
                         if (m == Method.Get)
                         {
                             throw new Exception("Method \"GET\" must not have payload.");
                         }
 
-                        //var chars = new char[bodyRaw.Length / sizeof(char)];
-                        var chars = new char[bodyRaw.Length];
-                        for (int i = 0; i < chars.Length; i++)
-                        {
-                            chars[i] = (char)bodyRaw[i];
-                        }
-                        //Buffer.BlockCopy(bodyRaw, 0, chars, 0, bodyRaw.Length);
-                        var b = new string(chars);
-                        request.AddStringBody(b, DataFormat.None);
+                        request.AddStringBody(text, DataFormat.None);
                     }
                 }
 
