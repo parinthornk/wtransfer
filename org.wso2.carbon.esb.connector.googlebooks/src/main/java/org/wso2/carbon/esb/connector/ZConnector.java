@@ -69,7 +69,7 @@ public class ZConnector {
 		public static ZResult ERROR_500(Exception ex) {
 			ZResult ret = new ZResult();
 			HashMap<String, Object> m1 = new HashMap<String, Object>();
-			m1.put("error", "" + ex);
+			m1.put("error", ex.getMessage());
 			ret.content = ZConnector.ConvertToJsonString(m1);
 			ret.statusCode = 500;
 			return ret;
@@ -77,7 +77,7 @@ public class ZConnector {
 		public static ZResult ERROR_400(Exception ex) {
 			ZResult ret = new ZResult();
 			HashMap<String, Object> m1 = new HashMap<String, Object>();
-			m1.put("error", "" + ex);
+			m1.put("error", ex.getMessage());
 			ret.content = ZConnector.ConvertToJsonString(m1);
 			ret.statusCode = 400;
 			return ret;
@@ -85,7 +85,7 @@ public class ZConnector {
 		public static ZResult ERROR_501(Exception ex) {
 			ZResult ret = new ZResult();
 			HashMap<String, Object> m1 = new HashMap<String, Object>();
-			m1.put("error", "" + ex);
+			m1.put("error", ex.getMessage());
 			ret.content = ZConnector.ConvertToJsonString(m1);
 			ret.statusCode = 501;
 			return ret;

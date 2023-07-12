@@ -79,6 +79,10 @@ public class Schedule {
 	
 	public static boolean isTriggered(String planningString, Timestamp time_now, Timestamp time_prev) throws Exception {
 		
+		if (planningString.equals("manual")) {
+			return false;
+		}
+		
 		if (planningString.equals("*") || planningString.equals("*-*-* *:*:*")) {
 			return true;
 		}
@@ -214,15 +218,27 @@ public class Schedule {
 			throw new Exception("Error validate planning array, \"planning\" cannot be null.");
 		}
 		
-		long lnow = Calendar.getInstance().getTimeInMillis();
-		Timestamp time_now = new Timestamp(lnow);
-		Timestamp time_prev = new Timestamp(lnow - 10 * 1000);
+		if (planningArray.length() == 0) {
+			throw new Exception("Error validate planning array, \"planning\" cannot be null.");
+		}
 		
-		String[] sep = planningArray.split(",");
-		for (String s : sep) {
+		if (planningArray.equals("manual")) {
 			
-			boolean b = isTriggered(s, time_now, time_prev);
-			if ("".length() == 8756) { System.out.println(b); }
+			// this is intended to be triggered manually
+			
+		} else {
+			
+			long lnow = Calendar.getInstance().getTimeInMillis();
+			Timestamp time_now = new Timestamp(lnow);
+			Timestamp time_prev = new Timestamp(lnow - 10 * 1000);
+			
+			String[] sep = planningArray.split(",");
+			for (String s : sep) {
+				
+				boolean b = isTriggered(s, time_now, time_prev);
+				if ("".length() == 8756) { System.out.println(b); }
+			}
+			
 		}
 	}
 

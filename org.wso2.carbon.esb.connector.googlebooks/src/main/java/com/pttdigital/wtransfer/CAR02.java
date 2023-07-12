@@ -54,6 +54,8 @@ import com.pttdigital.wtransfer.ImportV2.OL;
 
 public class CAR02 {
 	
+	private static Queue.Publisher queuePublisher = new Queue.Publisher();
+	
 	public static Timestamp time_now;
 
 	private static String getJsPrint(String script) throws Exception {
@@ -104,7 +106,7 @@ public class CAR02 {
 		JsonElement e = Client.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/schedules/update-checkpoint", "post", null, new Gson().fromJson("{\"now\":\"" + now + "\"}", JsonObject.class));
 		JsonArray arr = e.getAsJsonObject().get("list").getAsJsonArray();
 		
-		OL.sln("arr: " + arr.size());
+		
 		
 		if (allSchedules.size() != arr.size()) { throw new Exception("Unexpected exception. \"allSchedules.size() != arr.size()\". ["+allSchedules.size()+" != "+arr.size()+"]"); }
 
@@ -114,7 +116,7 @@ public class CAR02 {
 			
 			if (schedule.isPendingAdHoc) {
 				
-				OL.sln("triggered.add("+schedule.name+");");
+				
 				triggered.add(schedule);
 				
 				try {
@@ -196,7 +198,7 @@ public class CAR02 {
 	public static ZConnector.ZResult getResult() {
 		try {
 			long t0 = System.currentTimeMillis();
-			loop();
+			loop(null);
 			long t1 = System.currentTimeMillis();
 			long duration = t1 - t0;
 			return ZConnector.ZResult.OK_200("{\"executed\": " + t1 + ", \"duration\": " + duration + "}");
@@ -219,6 +221,9 @@ public class CAR02 {
 		// list sites
 		ArrayList<String> sitesDistinct = new ArrayList<String>();
 		for (Schedule schedule : triggered) {
+			
+			OL.sln("schedule: " + schedule);
+			
 			if (!sitesDistinct.contains(schedule.siteSource)) {
 				sitesDistinct.add(schedule.siteSource);
 			}
@@ -251,7 +256,18 @@ public class CAR02 {
 								//ex.printStackTrace();
 							}
 						}
+						
+						
+						
+						
+						
+						
+						
+						// retry?
 						sv.open();
+						
+						
+						
 						success = true;
 					} catch (Exception ex) {
 						//ex.printStackTrace();
@@ -393,18 +409,34 @@ public class CAR02 {
 						String folderArchive = folder + "/Archive"; // TODO
 						String fileNameArchive = fileName + "." + new SimpleDateFormat("yyyyMMddHHmmss").format(time_now) + ".arc";
 						
-						//OL.sln("folderArchive: " + folderArchive);
-						//OL.sln("fileNameArchive: " + fileNameArchive);
 						
 						
 						try {
 
 							// TODO real archive concurrently
-							if (!server.directoryExists(folderArchive)) {
-								server.createDirectory(folderArchive);
-								//OL.sln("server.createDirectory("+folderArchive+");");
+							long t_start = System.currentTimeMillis();
+							int _30_seconds = 30 * 1000;
+							while ("" != null) {
+								Exception error = null;
+								try {
+									if (!server.directoryExists(folderArchive)) {
+										server.createDirectory(folderArchive);
+									}
+									server.move_internal(folder + "/" + fileName, folderArchive + "/" + fileNameArchive);
+									break;
+								} catch (Exception ex) {
+									error = ex;
+								}
+								
+								long elapsed = System.currentTimeMillis() - t_start;
+								if (elapsed > _30_seconds) {
+									throw error;
+								} else {
+									Thread.sleep(250);
+								}
 							}
-							server.move_internal(folder + "/" + fileName, folderArchive + "/" + fileNameArchive);
+							
+							
 							// -------------------------------------------------------------------------------------------- //
 							String arc_name_key = siteName + ":" + folder + ":" + fileName;
 							mapFileArcName.put(arc_name_key, fileNameArchive);
@@ -662,7 +694,7 @@ public class CAR02 {
 					ArrayList<String> list = messages.get(scheduleName);
 					for (String text : list) {
 						try {
-							Queue.Publisher.enqueue(scheduleName, text);
+							queuePublisher.enqueue(scheduleName, text);
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}
@@ -673,14 +705,20 @@ public class CAR02 {
 		}
 	}
 	
-	public static void loop() throws Exception {
+	public static HashMap<String, ArrayList<String>> loop(String specific_schedule) throws Exception {
 		
 		System.out.println("------------------------------------------------------------------------------------");
+		
+		HashMap<String, ArrayList<String>> messages = null;
+		
+		Exception error = null;
 		
 		try {
 			
 			// remove sessions without items
-			removeSessionsWithoutItems();
+			if (specific_schedule == null) {
+				removeSessionsWithoutItems();
+			}
 			
 			// now
 			time_now = new Timestamp(Calendar.getInstance().getTimeInMillis());
@@ -691,8 +729,21 @@ public class CAR02 {
 			System.out.println("allSchedules: " + allSchedules.size());
 			
 			// triggered schedules
-			ArrayList<Schedule> triggered = getTriggeredSchedules(allSchedules);
-			//ArrayList<Schedule> triggered = new ArrayList<Schedule>(); triggered.add(allSchedules.get("ROSE_TAS_OILLDDPost_CS-BC_TASH203-BS_ERP_ECP100-77"));
+			ArrayList<Schedule> triggered = null;
+			if (specific_schedule != null) {
+				
+				Schedule ts = allSchedules.get(specific_schedule);
+				
+				
+				
+				if (ts == null) {
+					throw new Exception("\"" + specific_schedule + "\" does not exists.");
+				}
+				
+				triggered = new ArrayList<Schedule>(); triggered.add(ts);
+			} else {
+				triggered = getTriggeredSchedules(allSchedules);
+			}
 			System.out.println("triggered: " + triggered.size());
 			
 			// all sites
@@ -700,7 +751,10 @@ public class CAR02 {
 			System.out.println("allSites: " + allSites.size());
 			
 			// list item in retry mode
-			HashMap<String, ArrayList<String>> itemsToRetry = getItemsForRetry(allSchedules, allSites);
+			HashMap<String, ArrayList<String>> itemsToRetry = new HashMap<String, ArrayList<String>>();
+			if (specific_schedule == null) {
+				itemsToRetry = getItemsForRetry(allSchedules, allSites);
+			}
 			
 			// open server connections concurrently
 			openServers(triggered, allSites);
@@ -714,14 +768,17 @@ public class CAR02 {
 			System.out.println("itemsToCreated: " + itemsToCreated.size());
 			
 			// construct message for all items
-			HashMap<String, ArrayList<String>> messages = constructItemsMessage(itemsToCreated, allSchedules, allSites, mapSessionsDescription, true);
+			messages = constructItemsMessage(itemsToCreated, allSchedules, allSites, mapSessionsDescription, true);
 			
 			try {
+				
 				// queue open
-				Queue.Publisher.open();
+				queuePublisher.open();
 				
 				// enqueue retry items
-				enqueue(itemsToRetry);
+				if (specific_schedule == null) {
+					enqueue(itemsToRetry);
+				}
 				
 				// enqueue new items
 				enqueue(messages);
@@ -729,19 +786,29 @@ public class CAR02 {
 			} catch (Exception ex) { ex.printStackTrace(); }
 			
 			// queue close
-			Queue.Publisher.close();
+			queuePublisher.close();
 
 			// remove sessions without items
-			removeSessionsWithoutItems();
+			if (specific_schedule == null) {
+				removeSessionsWithoutItems();
+			}
 			
-		} catch (Exception ex) { ex.printStackTrace(); }
+		} catch (Exception ex) { ex.printStackTrace(); error = ex; }
 		
 		// cleanup servers
 		closeServers();
 		
 		System.out.println("------------------------------------------------------------------------------------");
 		
-		IFileServer.ServerSFTP.printms();
+		//IFileServer.ServerSFTP.printms();
+		
+		if (specific_schedule != null) {
+			if (error != null) {
+				throw error;
+			}
+		}
+		
+		return messages;
 	}
 
 	private static void removeSessionsWithoutItems() {
@@ -840,127 +907,6 @@ public class CAR02 {
     	
     	return constructItemsMessage(items, allSchedules, allSites, mapSessions, false);
 	}
-    
-    /*public static ZResult sync_transfer(String workspace, String transferMode, String sourceServer, String sourceFile, String targetServer, String targetFile) {
-    	Exception exception = null;
-    	int code = 200;
-    	
-    	FileServer serverSource = null;
-    	FileServer serverTarget = null;
-    	InputStream inputStreamSource = null;
-    	
-    	try {
-        	
-        	// validate action
-        	if (!transferMode.equalsIgnoreCase("move") && !transferMode.equalsIgnoreCase("copy")) {
-        		code = 400;
-        		throw new Exception("Invalid transfer mode. Parameter \"transferMode\" must be assigned as \"COPY\" or \"MOVE\".");
-        	}
-    		
-    		// retrieve sites
-        	HashMap<String, Site> allSites = null;
-        	try {
-        		allSites = mapSites();
-        		code = 500;
-        	} catch (Exception ex) {
-        		throw new Exception("Error retrieving servers information from database. " + ex);
-        	}
-        	
-        	// connect, login to source
-        	try {
-        		Site site = allSites.get(sourceServer);
-        		if (site == null) { throw new Exception("Error retrieving servers information from database. The server \"" + sourceServer + "\" could not be found on workspace \"" + workspace + "\"."); }
-        		if (!site.workspace.equals(workspace)) { throw new Exception("Error retrieving servers information from database. The server \"" + sourceServer + "\" could not be found on workspace \"" + workspace + "\"."); }
-        		serverSource = IFileServer.createServer(site);
-        		serverSource.open();
-        	} catch (Exception ex) {
-        		code = 500;
-        		throw new Exception("Error connecting to source server \"" + sourceServer + "\". " + ex);
-        	}
-        	
-        	// connect, login to target
-        	try {
-        		Site site = allSites.get(targetServer);
-        		if (site == null) { throw new Exception("Error retrieving servers information from database. The server \"" + targetServer + "\" could not be found on workspace \"" + workspace + "\"."); }
-        		if (!site.workspace.equals(workspace)) { throw new Exception("Error retrieving servers information from database. The server \"" + targetServer + "\" could not be found on workspace \"" + workspace + "\"."); }
-        		serverTarget = IFileServer.createServer(site);
-            	serverTarget.open();
-        	} catch (Exception ex) {
-        		code = 500;
-        		throw new Exception("Error connecting to target server \"" + targetServer + "\". " + ex);
-        	}
-        	
-        	// source stream
-        	try {
-            	inputStreamSource = serverSource.getInputStream(sourceFile);
-            	if (inputStreamSource == null) {
-            		throw new Exception("Please make sure the file \"" + sourceFile + "\" exist and is accessible by the logged user.");
-            	}
-        	} catch (Exception ex) {
-        		code = 500;
-        		throw new Exception("Error acquiring InputStream on source file \"" + sourceFile + "\". " + ex);
-        	}
-        	
-        	// check if target directory if not exists
-        	boolean targetDirExists = false;
-        	String targetFolder = "";
-        	try {
-        		String[] tmp = targetFile.split("/");
-        		String targetFileName = tmp[tmp.length - 1];
-        		targetFolder = targetFile.substring(0, targetFile.length() - targetFileName.length() - 1);
-        		OL.sln("targetFolder: " + targetFolder);
-        		targetDirExists = serverTarget.directoryExists(targetFile);
-        	} catch (Exception ex) {
-        		code = 500;
-        		throw new Exception("Error while checking existence of target folder: \"" + targetFolder + "\". " + ex);
-        	}
-        	
-        	// create target folder if not exists
-        	if (!targetDirExists) {
-        		try {
-        			serverTarget.createDirectory(targetFolder);
-        		} catch (Exception ex) {
-        			throw new Exception("Error creating target folder \"" + targetFolder + "\". " + ex);
-        		}
-        	}
-        	
-        	// transfer to target
-        	try {
-        		serverTarget.receiveFileFromInputStream(inputStreamSource, targetFile, true);
-        	} catch (Exception ex) {
-        		code = 500;
-        		throw new Exception("Error while uploading to target \"" + targetFile + "\". " + ex);
-        	}
-        	
-        	// delete the source file if needed
-        	if (transferMode.equalsIgnoreCase("move")) {
-            	try {
-            		serverSource.deleteFile(sourceFile);
-            	} catch (Exception ex) {
-            		throw new Exception("The file was copied to target successfully but it failed to be deleted on source. " + ex);
-            	}
-        	}
-        	
-    	} catch (Exception ex) {
-    		exception = ex;
-    	}
-    	
-    	// cleanup
-    	if (inputStreamSource != null) { try { inputStreamSource.close(); } catch (Exception ex) { } }
-    	if (serverSource != null) { try { serverSource.close(); } catch (Exception ex) { } }
-    	if (serverTarget != null) { try { serverTarget.close(); } catch (Exception ex) { } }
-    	
-    	// result
-    	ZResult result = new ZResult();
-    	if (exception == null) {
-    		result = ZResult.OK_200("{\"message\":\"File transfer completed without errors.\"}");
-    	} else {
-    		JsonObject o = new JsonObject();
-    		o.addProperty("message", exception + "");
-    		result = new ZResult(); result.statusCode = code; result.content = o.toString();
-    	}
-    	return result;
-    }*/
 
 	public static ZResult sync_delete(String workspace, String server, String file) {
     	Exception exception = null;
@@ -1017,8 +963,14 @@ public class CAR02 {
     	return result;
 	}
 	
+	public static void execute_schedule(String schedule) {
+		
+	}
+	
     public static void main(String[] args) throws Exception {
     	
+    	
+    	loop("test-zparin-manual");
     	
 
 		
@@ -1053,7 +1005,7 @@ public class CAR02 {
     	
     	
     	
-    	String item = "a833c7ec3a8c4883a976b79794718bf3";
+    	/*String item = "a833c7ec3a8c4883a976b79794718bf3";
     	String session = "7569202";
     	
     	JsonArray arr = new JsonArray();
@@ -1105,19 +1057,6 @@ public class CAR02 {
     				}
     			}
     		}
-    	}
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
+    	}*/
     }
 }

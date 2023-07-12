@@ -106,4 +106,41 @@ namespace WTRANSFER
         Stream GetStreamReceive(string path);
         void FileRename(string before, string after);
     }
+
+    public class SessionManager
+    {
+        private static Dictionary<string, FileServer> DictServer { get; set; } = new Dictionary<string, FileServer>();
+        private static object _locker_dict_server = new();
+
+        public static IFileServer IFileServerGet(string id)
+        {
+            lock (_locker_dict_server)
+            {
+                if (DictServer.ContainsKey(id))
+                {
+                    return (IFileServer)DictServer[id];
+                }
+                else
+                {
+                    throw new KeyNotFoundException("The key \"" + id + "\" could not be found.");
+                }
+            }
+        }
+
+        public static void IFileServerAdd(string id, dynamic fileServer)
+        {
+            lock (_locker_dict_server)
+            {
+                DictServer.Add(id, fileServer);
+            }
+        }
+
+        public static void IFileServerDelete(string id)
+        {
+            lock (_locker_dict_server)
+            {
+                DictServer.Remove(id);
+            }
+        }
+    }
 }

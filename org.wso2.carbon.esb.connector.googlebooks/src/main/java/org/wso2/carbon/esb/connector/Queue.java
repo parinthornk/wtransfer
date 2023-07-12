@@ -15,7 +15,7 @@ public class Queue {
 		private static Channel channel;
 		private static ArrayList<String> queuesName = new ArrayList<String>();
 		
-		public static void open() throws Exception {
+		public void open() throws Exception {
 			queuesName.clear();
 			factory = new ConnectionFactory();
 			factory.setHost(ZConnector.Constant.Q_HOST);
@@ -26,13 +26,13 @@ public class Queue {
 			channel = connection.createChannel();
 		}
 		
-		public static void close() {
+		public void close() {
 			try { channel.close(); } catch (Exception e) { }
 			try { connection.close(); } catch (Exception e) { }
 			queuesName.clear();
 		}
 		
-		public static void enqueue(String queueName, String text) throws Exception {
+		public void enqueue(String queueName, String text) throws Exception {
 			
 			// initiate new queue if not exists
 			if (!queuesName.contains(queueName)) {

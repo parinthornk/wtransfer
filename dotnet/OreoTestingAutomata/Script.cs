@@ -719,7 +719,9 @@ namespace OreoTestingAutomata
 
             //AutoInfo("H2O_BankPayment_KTB_CycleTime_CS-BS_ERP_ECP100-BC_OR_FTP-REF613", "ZPIFII008", 1, true);// -> need to retest
 
-            AutoInfo("EOrder_DAClearingInvoice_CS-BC_EORDER-File_Receiver_EOrder_DAClearingInvoice_CC-REF130", "ZPIFII017", 0, true);
+            //AutoInfo("EOrder_DAClearingInvoice_CS-BC_EORDER-File_Receiver_EOrder_DAClearingInvoice_CC-REF130", "ZPIFII017", 0, true);
+
+            AutoInfo("PTTOR_NewMarine_DealerDocAttachedfileSend_CS-BC_OR_NewMarine-File_Receiver_PTTOR_NewMarineAttachment_CC-REF261", "ZPISDI178", 0, true);
 
 
             /*// outbound

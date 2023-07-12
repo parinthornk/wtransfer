@@ -70,8 +70,12 @@ public interface IFileServer {
 	public static IFileServer.FileServer createServer(Site site) throws Exception {
 		
 		// custom site
-		if (site.description.contains("896126e3-c6df-4e9f-bedc-03378f3e41fe")) {
-			return new ServerCustom(site);
+		if (site != null) {
+			if (site.description != null) {
+				if (site.description.contains("896126e3-c6df-4e9f-bedc-03378f3e41fe")) {
+					return new ServerCustom(site);
+				}
+			}
 		}
 		
 		if (site.protocol.equalsIgnoreCase("sftp")) {

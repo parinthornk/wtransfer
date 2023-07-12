@@ -22,6 +22,8 @@ import com.google.gson.JsonObject;
 
 public class CAR02 {
 	
+	private static Queue.Publisher queuePublisher = new Queue.Publisher();
+	
 	private static JsonArray listSites() throws Exception {
 		JsonElement jsonSites = ClientLib.getJsonResponse(ZConnector.Constant.WTRANSFER_API_ENDPOINT + "/sites", "get", null, null);
 		return jsonSites.getAsJsonObject().get("list").getAsJsonArray();
@@ -479,7 +481,7 @@ public class CAR02 {
 		String text = "{\"source\":" + siteSource + ",\"target\":" + siteTarget + ",\"pgp\":" + pgp + ",\"config\":" + config + ",\"fileName\":\"" + fileName + "\", \"item\":" + eItem + "}";
 		String queueName = Site.parse(siteSource).name + "--to--" + Site.parse(siteTarget).name;
 		try {
-			Queue.Publisher.enqueue(queueName, text);
+			queuePublisher.enqueue(queueName, text);
 			ClientLib.setItemStatus(item, Item.Status.QUEUED);
 		} catch (Exception ex) { ex.printStackTrace(); }
 	}
@@ -487,7 +489,7 @@ public class CAR02 {
 	public static void enqueue(ArrayList<Item> itemsToQueue, JsonArray sites, JsonArray pgps, JsonArray configs) throws Exception {
 		
 		try {
-			Queue.Publisher.open();
+			queuePublisher.open();
 			
 			String sep = "dVGwpG0k";
 			ArrayList<String> al = new ArrayList<String>(); 
@@ -516,7 +518,7 @@ public class CAR02 {
 			ex.printStackTrace();
 		}
 		
-		Queue.Publisher.close();
+		queuePublisher.close();
 	}
 	
 	public static ZConnector.ZResult getResult() {

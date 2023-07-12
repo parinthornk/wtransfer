@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-
+import org.wso2.carbon.esb.connector.Queue;
 import org.wso2.carbon.esb.connector.ZConnector;
 import org.wso2.carbon.esb.connector.ZConnector.Constant;
 import org.wso2.carbon.esb.connector.ZConnector.ZResult;
@@ -297,7 +297,7 @@ public class ZAPIV3 {
 			if (match(path, method, "/workspaces/*/schedules, post")) {
 				
 				
-				OL.sln("123445");
+				//OL.sln("123445");
 				
 				String workspace = getFromPathParamsAsString(path, 1);
 				
@@ -375,6 +375,49 @@ public class ZAPIV3 {
 				String sql = DB.sqlDeleteInWorkspace(c, schedule, workspace);
 				JsonElement e = DB.executeDelete(sql, c.getSimpleName(), schedule);
 				return ZResult.OK_200(e.toString());
+			}
+			if (match(path, method, "/workspaces/*/schedules/*/execute, post")) {
+				String workspace = getFromPathParamsAsString(path, 1);
+				
+				if (!workspace.equals("default")) {
+					throw new Exception("Schedule execution only suppport default workspace.");
+				}
+				
+				String schedule = getFromPathParamsAsString(path, 3);
+				HashMap<String, ArrayList<String>> result = CAR02.loop(schedule);
+				if (result == null) {
+					return ZResult.OK_200("{\"message\":\"Found 0 items.\"}");
+				} else {
+					if (result.size() == 0) {
+						return ZResult.OK_200("{\"message\":\"Found 0 items.\"}");
+					} else {
+						
+						// read status of all queued items
+						Set<String> o2 = result.keySet();
+						JsonArray arr = new JsonArray();
+						for (String schedule_name : o2) {
+							ArrayList<String> al = result.get(schedule_name);
+							if (al != null) {
+								for (String jsonString : al) {
+									try {
+										JsonObject statusOfItem = getStatusOfItem(jsonString);
+										arr.add(statusOfItem);
+									} catch (Exception ex) {
+										
+										// this will response directly to postman
+										throw new Exception(result.size() + " items are enqueued but the program failed to monitor their status. " + ex.getMessage());
+									}
+								}
+							}
+						}
+						
+						// success with json array
+						JsonObject o = new JsonObject();
+						o.add("result", arr);
+						return ZResult.OK_200(o.toString());
+					}
+				}
+				
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> Session
 			c = Session.class;
@@ -608,22 +651,31 @@ public class ZAPIV3 {
 		    	//OL.sln(resultSchedule.content);
 		    	Client.addItemLog(item, Log.Type.INFO, "RE-EXECUTION", "The item is re-executed manually.");
 		    	
-		    	// Site source, Site target, Schedule schedule, Item item
-		    	
-		    	//CAR03.(siteSource, siteTarget, schedule, item);
-		    	
-		    	
-		    	
+		    	// constructed
 		    	JsonObject o2 = new JsonObject();
 		    	o2.add("item", new Gson().fromJson(resultItem.content, JsonObject.class));
 		    	o2.add("session", new Gson().fromJson(resultSession.content, JsonObject.class));
 		    	o2.add("schedule", new Gson().fromJson(resultSchedule.content, JsonObject.class));
 		    	o2.add("siteSource", new Gson().fromJson(site_source.content, JsonObject.class));
 		    	o2.add("siteTarget", new Gson().fromJson(site_target.content, JsonObject.class));
-		    	CAR03.move_custom(o2.toString());
+		    	String constructedText = o2.toString();
 		    	
-		    	return ZResult.OK_200("{\"message\":\"OK\"}");
-				
+		    	// enqueue
+		    	Exception error = null;
+		    	Queue.Publisher publisher = null;
+		    	try {
+			    	publisher = new Queue.Publisher();
+			    	publisher.open();
+			    	publisher.enqueue(schedule_name, constructedText);
+		    	} catch (Exception ex) { error = ex; }
+		    	
+		    	if (publisher != null) { publisher.close(); }
+		    	
+		    	if (error != null) {
+		    		return ZResult.ERROR_500(error);
+		    	} else {
+			    	return ZResult.OK_200("{\"message\":\"OK\"}");
+		    	}
 			}
 			if (match(path, method, "/workspaces/*/sessions/*/items/*, patch")) {
 				String workspace = getFromPathParamsAsString(path, 1);
@@ -754,5 +806,75 @@ public class ZAPIV3 {
 			return ZResult.ERROR_500(ex);
 		}
 		return ZResult.ERROR_501(method, path);
+	}
+
+	private static JsonObject getStatusOfItem(String itemQueueString) throws Exception {
+		JsonObject jItem = new Gson().fromJson(itemQueueString, JsonObject.class).get("item").getAsJsonObject();
+		String itemName = jItem.get("name").getAsString();
+		String sessionId = new Gson().fromJson(itemQueueString, JsonObject.class).get("session").getAsJsonObject().get("id").getAsString();
+		//long twoMinutes = 2 * 60 * 1000;
+		long twoMinutes = 20 * 1000;
+		long t_start = System.currentTimeMillis();
+		
+		String deleteme = "";
+		
+		for (;;) {
+			long elapsed = System.currentTimeMillis() - t_start;
+			String trace = "/workspaces/default/sessions/" + sessionId + "/items/" + itemName;
+			if (elapsed > twoMinutes) {
+				throw new Exception("Transfer took too long. [item: " + trace + "], " + deleteme);
+			}
+			Object[] objs = readItemStaus(itemName, sessionId);
+			String iFileName = objs[1].toString();
+			String iStatus = objs[2].toString();
+			
+			deleteme = "[" + iFileName + ", " + iStatus + "]";
+			
+			if (iStatus.equalsIgnoreCase(Item.Status.SUCCESS.toString())) {
+				JsonObject jtmp = new JsonObject();
+				jtmp.addProperty("file", iFileName);
+				jtmp.addProperty("success", true);
+				jtmp.addProperty("trace", trace);
+				return jtmp;
+			} else if (iStatus.equalsIgnoreCase(Item.Status.FAILED.toString())) {
+				JsonObject jtmp = new JsonObject();
+				jtmp.addProperty("file", iFileName);
+				jtmp.addProperty("success", false);
+				jtmp.addProperty("trace", trace);
+				return jtmp;
+			} else {
+				Thread.sleep(1000);
+			}
+		}
+	}
+
+	private static String[] readItemStaus(String itemName, String sessionId) throws Exception {
+
+		int attempts = 5;
+		for (int i=0;i<attempts;i++) {
+
+			try {
+				ZResult zr = process("/workspaces/default/sessions/" + sessionId + "/items/" + itemName, "get", null, null, (byte[])null);
+				if (zr.statusCode != 200) {
+					throw new Exception(zr.content);
+				}
+				
+				Item item = (Item) DB.parse(Item.class, new Gson().fromJson(zr.content, JsonObject.class));
+				
+				
+				
+				return new String[] { item.name, item.fileName, item.status };
+				
+			} catch (Exception ex) {
+				if (i < attempts - 1) {
+					Thread.sleep(250);
+					continue;
+				} else {
+					throw ex;
+				}
+			}
+		}
+		
+		throw new Exception("Failed to read item status: " + "/workspaces/default/sessions/" + sessionId + "/items/" + itemName);
 	}
 }
