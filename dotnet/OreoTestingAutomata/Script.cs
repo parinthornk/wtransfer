@@ -396,13 +396,13 @@ namespace OreoTestingAutomata
                 var img_06 = Robot.ScreenCapture.CaptureActiveWindowPixels();
                 Save(output_folder + "\\" + "img_06.png", img_06);
 
-                /*// wait until file is archive?
+                // wait until file is archive?
                 int kd = 130;
                 for (int k=0;k< kd; k++)
                 {
                     Robot.Wait(1000);
                     Console.WriteLine("wait until file is archive -> [" + k + "/" + kd + "]");
-                }*/
+                }
                 // http://10.224.143.44:8290/wtransfer/workspaces/default/sites/legacy-0f1b722f-3675-4348-959e-37c9177cf7ac/objects?path=/EVChargingStation/DEVELOPMENT/SALES_TRANSACTION/OUTPUT
                 if (!FileExistByRestAPI(target_site_name, target_rootFolder, example_file_name, example_file_size))
                 {
@@ -721,7 +721,23 @@ namespace OreoTestingAutomata
 
             //AutoInfo("EOrder_DAClearingInvoice_CS-BC_EORDER-File_Receiver_EOrder_DAClearingInvoice_CC-REF130", "ZPIFII017", 0, true);
 
-            AutoInfo("PTTOR_NewMarine_DealerDocAttachedfileSend_CS-BC_OR_NewMarine-File_Receiver_PTTOR_NewMarineAttachment_CC-REF261", "ZPISDI178", 0, true);
+            //AutoInfo("PTTOR_NewMarine_DealerDocAttachedfileSend_CS-BC_OR_NewMarine-File_Receiver_PTTOR_NewMarineAttachment_CC-REF261", "ZPISDI178", 0, true);
+
+            // ---------------------------------------------------------------- 2023-07-13 begin
+
+            //AutoInfo("H2O_AutoReconcile_KTB_CS-BC_OR_SFTP-File_Receiver_OR_AutoReconcile_KTBMonthly_CC-REF766", "ZPIFII017", 7, false);
+            //AutoInfo("H2O_AutoReconcile_UOB_CS-BC_OR_UOB-SFTP_Receiver_OR_AutoReconcile_UOBMonthly_CC-REF974", "ZPIFII017", 9, false);
+
+
+            AutoInfo("ECC_FileTransfer_CS-BS_ERP_ECP100-BC_OR_EV-21", "ZPISDI150", 0, true);
+            AutoInfo("ECC_FileTransfer_CS-BC_OR_EV-BS_ERP_ECP100-176-REF1849", "ZPISDI150", 1, true);
+
+
+
+            // ---------------------------------------------------------------- 2023-07-13 end
+
+
+
 
 
             /*// outbound
