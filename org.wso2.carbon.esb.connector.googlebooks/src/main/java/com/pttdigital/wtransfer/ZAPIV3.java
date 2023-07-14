@@ -4,6 +4,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -718,6 +720,27 @@ public class ZAPIV3 {
 				String sql = "insert into " + Constant.SCHEMA + ".\"" + c.getSimpleName() + "\" (" + DB.concateStmtKeys(m1) + ") values (" + DB.concateStmtValues(m1) + ")" + " returning " + Translate.getNameOrId(c) + ";";
 				JsonElement e = DB.executeInsert(c, sql);
 				return ZResult.OK_200(e.toString());
+			}
+			if (match(path, method, "/workspaces/*/items, get")) {
+				
+				String[] status = null;
+				String time_start = null;
+				String time_stop = null;
+				
+				
+				if (query != null) {
+					if (query.size() > 0) {
+						time_start = query.get("time_start"); if (time_start != null) { time_start = LocalDateTime.parse(time_start, DateTimeFormatter.ofPattern("yyyyMMddHHmmss")).format(DateTimeFormatter.ofPattern(ZConnector.Constant.DATEFORMAT)); }
+						time_stop = query.get("time_stop"); if (time_stop != null) { time_stop = LocalDateTime.parse(time_stop, DateTimeFormatter.ofPattern("yyyyMMddHHmmss")).format(DateTimeFormatter.ofPattern(ZConnector.Constant.DATEFORMAT)); }
+						String ss = query.get(Item.wordStatus);
+						if (ss != null) {
+							status = ss.split(",");
+						}
+					}
+				}
+				
+				return ZResult.OK_200(CAR02.analytic_display_item(status, time_start, time_stop).toString());
+				
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> LogSchedule
 			c = LogSchedule.class;

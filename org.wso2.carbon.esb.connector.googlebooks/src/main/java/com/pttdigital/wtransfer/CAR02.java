@@ -15,6 +15,7 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -963,12 +964,75 @@ public class CAR02 {
     	return result;
 	}
 	
-	private static void analytic_display_item(String[] status, String time_start, String time_stop) {
+	public static JsonObject analytic_display_item(String[] status, String time_start, String time_stop) throws Exception {
+		// select * from "Item" where (created > '2023-07-14 10:57:05' and created < '2023-07-14 14:36:06') and (status ilike 'success' or status ilike 'failed') order by created
+		String text_time_0 = "true";
+		if (time_start != null) {
+			if (time_start.length() > 0) {
+				text_time_0 = Item.wordCreated + " > '" + time_start + "'";
+			}
+		}
 		
+		String text_time_1 = "true";
+		if (time_stop != null) {
+			if (time_stop.length() > 0) {
+				text_time_1 = Item.wordCreated + " < '" + time_stop + "'";
+			}
+		}
+		
+		String text_status = "true";
+		if (status != null) {
+			if (status.length > 0) {
+				text_status = "";
+				for (int i = 0; i < status.length; i++) {
+					text_status += Item.wordStatus  + " ilike '" + status[i] + "'" + " or ";
+				}
+				text_status = text_status.substring(0, text_status.length() - " or ".length());
+			}
+		}
+		
+		String sql = "select * from " + ZConnector.Constant.SCHEMA + ".\"" + Item.class.getSimpleName() + "\" where (" + text_time_0 + " and " + text_time_1 + ") and (" + text_status + ") order by " + Item.wordCreated;
+		
+		return DB.executeList(sql).getAsJsonObject();
 	}
 	
     public static void main(String[] args) throws Exception {
+
+    	/*long _24_hours = 48 * 60 * 60 * 1000;
     	
-    	//display_query_item();
+    	long ms_now = Calendar.getInstance().getTimeInMillis();
+    	
+    	Timestamp t_start = new Timestamp(ms_now - _24_hours);
+    	
+    	String text_start = new SimpleDateFormat(ZConnector.Constant.DATEFORMAT).format(t_start);
+    	
+    	analytic_display_item(new String[] { "failed" }, text_start, null);*/
+    	
+    	// /workspaces/default/items?time_start=20230714152700&time_stop=20230715032700&status=queued,executing,failed,success,dismiss
+
+    	byte[] bodyRaw = null;
+		String method = "get";
+		String path = "/workspaces/default/items?time_start=20230712000000";
+		
+		// query parameters
+		HashMap<String, String> query = new HashMap<String, String>();
+		try {
+			String[] sp1 = path.split("\\?");
+			if (sp1.length == 2) {
+				path = sp1[0];
+				String[] sp2 = sp1[1].split("&");
+				for (int n=0;n<sp2.length;n++) {
+					String[] sp3 = sp2[n].split("=");
+					try {
+						String key = sp3[0];
+						String value = sp3[1];
+						query.put(key, value);
+					} catch (Exception ex) { }
+				}
+			}
+		} catch (Exception ex) { ex.printStackTrace(); }
+		ZResult result = com.pttdigital.wtransfer.ZAPIV3.process(path, method, query, null, bodyRaw);
+    	
+		OL.sln("result.content: " + result.content.length());
     }
 }

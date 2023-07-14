@@ -41,8 +41,9 @@ public class Item {
 		SUCCESS,
 		DISMISS,
 	}
-	
+
 	public static final String wordStatus = "status"; // TODO: modify this after DB field change
+	public static final String wordCreated = "created"; // TODO: modify this after DB field change
 	public static final String wordStatusOperation = "ilike"; // TODO: modify this after DB field change
 	
 	public static final String word_timeLatestRetry = "timeLatestRetry"; // TODO: modify this after DB field change

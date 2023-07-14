@@ -296,6 +296,32 @@ app.all('/sessions/:session/items/:item', (req, response) => {
 	});
 });
 
+app.all('/items-summary', (req, response) => {
+	
+	let filePath = "items-summary.html";
+	
+	fs.readFile(filePath, {encoding: 'utf-8'}, function(err, data){
+		if (!err) {
+			get_token((token) => {
+				let data_with_token = data.replace("{access_token}", token["access_token"]);
+				
+				console.log(data_with_token);
+				response.setHeader('Content-Type', 'text/html');
+				response.status(200);
+				response.end(data_with_token);
+			}, (e) => {
+				response.writeHead(500, {'Content-Type': 'text/html'});
+				response.write(e);
+				response.end();
+			});
+		} else {
+			response.writeHead(500, {'Content-Type': 'text/html'});
+			response.write("error");
+			response.end();
+		}
+	});
+});
+
 app.all('/schedules/:schedule/sessions/:session', (req, response) => {
 	
 	let filePath = "sessions-_.html";
