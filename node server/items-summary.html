@@ -12,7 +12,7 @@
 <body>
 
 
-<div style="margin-left:50px;margin-right:50px;">
+<div>
 
 
 
@@ -22,9 +22,9 @@
 
 
 
-	<div class="table-responsive">
-		<h3 id="head-schedule"> / <a href="http://localhost:3000/schedules">schedules</a> / <a href="http://localhost:3000/items-summary">items-summary</a></h3>
-		
+	<div style="margin-left:75px;margin-right:75px; font-size:0.75em;">
+		<h3 id="head-schedule"> / <a href="http://localhost:3000/items-summary">items-summary</a></h3>
+		<p>List of file transfer schedules. For transfer schedules, <a href="http://localhost:3000/schedules" class="link-primary">click here</a>.</p>
 		
 			
 			
@@ -103,9 +103,11 @@
 			
 			
 			
-			<button type="button" class="btn btn-primary" onclick="submit_request()" id="btn_re_execute" style="margin-bottom:25px; margin-left:0px; font-size: 0.75em;">Submit</button>
+			<button type="button" class="btn btn-primary" onclick="submit_request()" id="btn_submit" style="margin-bottom:25px; margin-left:0px;">Apply</button>
 		</form>
 		
+		<table class="table table-condensed table-hover" id="myTable" style="font-family: consolas;">
+		</table>
 	</div>
 </div>
 
@@ -165,17 +167,279 @@ function toggle_chb_use_lookback_custom_period() {
 }
 
 const callAPI = async (url_00) => {
+
+	document.getElementById("btn_submit").disabled = true;
+	document.getElementById("myTable").innerHTML = "";
 	const response_00 = await fetch(url_00, {
 		method: 'GET',
 		headers: {
 			"Authorization": "Bearer " + token
 		}
 	});
-	const myJson_00 = await response_00.json();
-	console.log(myJson_00);
+	
+	
+	const myJson = await response_00.json();
+	
+	
+	let unnecessaryFields = [
+		"workspace",
+		//"created",
+		"modified",
+		"useDynamicDirSource",
+		"fnDynamicDirSource",
+		"useDynamicDirTarget",
+		"fnDynamicDirTarget",
+		"retryCount",
+		"retryIntervalMs",
+		"fnIsFileToMove",
+		"fnRenameTo",
+		"archiveFolder",
+		"fnArchiveRenameTo",
+		"workerThreads",
+		"pgpDirection",
+		"pgpKeyPath",
+		"pgpKeyPassword",
+		"fnPgpRenameTo",
+		"plan",
+		"validFrom",
+		"validUntil",
+		"staticDirSource",
+		"staticDirTarget",
+		
+		"fnCallback",
+		"fileNameArchive",
+		"folderArchive",
+		"folder",
+		"folderArchive",
+		"description",
+		"timeNextRetry",
+		"timeLatestRetry",
+		"retryQuota",
+		"retryRemaining",
+		"session"
+	];
+	
+	let fieldRename = [
+		{
+			"from": "siteSource",
+			"to": "source server"
+		},
+		{
+			"from": "siteTarget",
+			"to": "target server"
+		},
+		{
+			"from": "name",
+			"to": "item ID"
+		},
+		{
+			"from": "previousCheckpoint",
+			"to": "last updated"
+		}
+	];
+	
+	let objects = myJson["list"];
+	
+	
+	
+	if (objects.length > 0) {
+		
+		
+		
+		
+		// load sessions, TODO
+		{
+			let arr_ss = [];
+			
+			for (let i = 0; i < objects.length; i++) {
+				let session = objects[i]["session"];
+				if (!arr_ss.includes[session]) {
+					arr_ss.push(session);
+				}
+			}
+			console.log(arr_ss.length);
+			
+			const response_01 = await fetch("https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/schedules", {
+				method: 'GET',
+				headers: {
+					"Authorization": "Bearer " + token
+				}
+			});
+			const myJson_01 = await response_01.json();
+			console.log(myJson_01["count"]);
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	
+		// reverse??
+		objects.reverse();
+		
+		// re-order fields
+		{
+			for (let index_01 = 0; index_01 < objects.length; index_01++) {
+				let old_obj = objects[index_01];
+				let string_01 = JSON.stringify(objects[index_01]);
+				let json_01 = JSON.parse(string_01);
+				
+				// get all fields
+				let fields_01 = Object.keys(json_01);
+				
+				let reo = [
+					"created", 
+					"session", 
+				];
+				
+				let new_obj = {};
+				for (let i = 0; i < reo.length; i++) {
+					new_obj[reo[i]] = old_obj[reo[i]];
+				}
+				
+				for (let i = 0; i < fields_01.length; i++) {
+					if (reo.includes(fields_01[i])) {
+						continue;
+					} else {
+						new_obj[fields_01[i]] = old_obj[fields_01[i]];
+					}
+				}
+				
+				
+				// add re-execute column
+				new_obj["action"] = "re-execute";
+				
+				objects[index_01] = new_obj;
+			}
+		}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		
+		// sample
+		let sample = objects[0];
+		
+		// delete unnecessary fields
+		for (let i = 0; i < unnecessaryFields.length; i++) {
+			delete sample[unnecessaryFields[i]];
+		}
+		
+		// assign thead
+		let thead = "";
+		let fields = Object.keys(sample);
+		for (let i=0;i<fields.length;i++) {
+			let field = fields[i];
+			
+			// rename
+			for (let n = 0; n < fieldRename.length; n++) {
+				let fr = fieldRename[n];
+				if (fr["from"] === field) {
+					field = fr["to"];
+				}
+			}
+			
+			let th = "<th>"+field+"</th>";
+			thead += th;
+		}
+		thead = "<thead><tr>" + thead + "</tr></thead>";
+		
+		// assign tbody
+		let tbody = "";
+		for (let i=0;i<objects.length;i++) {
+			let obj = objects[i];
+			
+			
+			
+			// sessionId
+			let sessionId = obj["session"];
+			
+			// itemName
+			let itemName = obj["name"];
+			
+			// status
+			let status = obj["status"];
+			
+			// need re-execute?
+			let status_to_re_execute = ["WAITING_FOR_RETRY", "FAILED", "DISMISS", "CREATED", "ERROR_ENQUEUE"];
+			let need_re_execute = status_to_re_execute.includes(status);
+			
+			
+			
+			
+			let myText = "";
+			for (let j=0;j<fields.length;j++) {
+				let tkey = fields[j];
+				let tvalue = obj[tkey];
+				
+				if (tvalue == "null") {
+					tvalue = "-";
+				}
+				if (tvalue == null) {
+					tvalue = "-";
+				}
+				
+				
+				let tmp_value = "<td>" + tvalue + "</td>";
+				
+				/*if (j == 1) {
+					tmp_value = "<td><a target=\"_blank\" href=\"http://localhost:3000/sessions/" + sessionId + "/items/" + itemName + "\">" + tvalue + "</a></td>";
+				}*/
+				
+				if (j == 1) {
+					tmp_value = "<td><a target=\"_blank\" href=\"http://localhost:3000/sessions/" + sessionId + "/items/" + itemName + "\" style=\"font-family: consolas;\">" + tvalue + "</a></td>";
+				}
+				
+				if (j == 3 && need_re_execute) {
+					tmp_value =  "<td><span class=\"badge badge-warning rounded-pill d-inline\" style=\"padding:3px 10px 3px 10px; color: rgb(156, 0, 6); background-color:rgb(255, 199, 206);;\">" + tvalue + "</span></td>";
+				}
+				
+				if (j == 4) {
+					if (need_re_execute) {
+						tmp_value = "<td><button type=\"button\" class=\"btn btn-primary\" style=\"padding:0px 5px 0px 5px; font-size:1.00em;\">re-execute</button></td>";
+					} else {
+						tmp_value = "<td>" + "-" + "</td>";
+					}
+					
+				}
+				
+				myText += tmp_value;
+			}
+			let tb = "<tr>" + myText + "</tr>";
+			tbody += tb;
+		}
+		tbody = "<tbody>" + tbody + "</tbody>";
+		let tall = thead + tbody;
+		//console.log(tall);
+		document.getElementById("myTable").innerHTML = tall;
+	} else {
+		alert("objects.length > 0 ---> false");
+	}
+	document.getElementById("btn_submit").disabled = false;
 }
 
 function submit_request() {
+
+	
+	
 	
 	let t_api_from = "";
 	let t_api_to = "";
@@ -241,6 +505,8 @@ function submit_request() {
 	arr_status = arr_status.toLowerCase();
 	
 	let url = "https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/items?time_start=" + t_api_from + "&time_stop=" + t_api_to + "&status=" + arr_status;
+	
+	
 	callAPI(url);
 	
 }
