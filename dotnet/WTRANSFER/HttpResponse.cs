@@ -77,7 +77,28 @@ namespace WTRANSFER
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                 {
-                    throw new HttpRequestException("Error accessing \"" + url + "\". " + response.ErrorMessage);
+                    var err = string.Empty;
+                    if (!string.IsNullOrEmpty(response.ErrorMessage))
+                    {
+                        err += ", [" + response.ErrorMessage + "], ";
+                    }
+                    if (!string.IsNullOrEmpty(response.Content))
+                    {
+                        err += ", [" + response.Content + "], ";
+                    }
+
+                    if (err.Length > 2)
+                    {
+                        err = err.Substring(0, err.Length - 2);
+                    }
+
+                    err = "Error accessing \"" + url + "\"" + err;
+                    while (err.Contains("http://10.224.143.44:8290"))
+                    {
+                        err = err.Replace("http://10.224.143.44:8290", string.Empty);
+                    }
+
+                    throw new HttpRequestException(err);
                 }
 
                 httpResponse = new HttpResponse()

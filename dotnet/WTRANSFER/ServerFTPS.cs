@@ -34,7 +34,10 @@ namespace WTRANSFER
                         Host = SiteInfo.IP,
                         Port = SiteInfo.Port,
                         Credentials = new NetworkCredential(SiteInfo.Username, SiteInfo.Password),
+                        
                     };
+
+                    
 
                     /*Console.WriteLine("cv-1");
 
@@ -201,6 +204,56 @@ namespace WTRANSFER
         public void TransferInternal(string absPathOld, string absPathNew)
         {
             Client.MoveFile(absPathOld, absPathNew, FtpRemoteExists.Overwrite);
+        }
+
+        public Dictionary<string, bool> ListItemsNameRecursively(string folder)
+        {
+            var ret = new Dictionary<string, bool>();
+            listFilesAndFolders(Client, folder, ret);
+            return ret;
+        }
+
+        private static void listFilesAndFolders(FtpClient client, string folderPath, Dictionary<string, bool> ret)
+        {
+            var x = client.GetListing(folderPath);
+            foreach (var item in x)
+            {
+                
+                if (item.Type == FtpObjectType.Directory)
+                {
+                    ret.Add(item.FullName, true);
+                    listFilesAndFolders(client, item.FullName, ret);
+                }
+                else
+                {
+                    ret.Add(item.FullName, false);
+                }
+            }
+        }
+
+        public void FolderDelete(string folder)
+        {
+            DeleteFolder(Client, folder);
+        }
+
+        private static void DeleteFolder(FtpClient client, string folderPath)
+        {
+            // List the files and folders in the current directory
+            foreach (var item in client.GetListing(folderPath))
+            {
+                // If the item is a file, delete it
+                if (item.Type == FtpObjectType.File)
+                {
+                    client.DeleteFile(item.FullName);
+                }
+                else if (item.Type == FtpObjectType.Directory)
+                {
+                    DeleteFolder(client, item.FullName);
+                }
+            }
+
+            // Delete the current directory after deleting its contents
+            client.DeleteDirectory(folderPath);
         }
     }
 }

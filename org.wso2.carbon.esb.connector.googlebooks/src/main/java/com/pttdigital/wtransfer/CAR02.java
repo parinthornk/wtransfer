@@ -78,6 +78,7 @@ public class CAR02 {
 			try { writer.close(); } catch (Exception e1) { }
 		} catch (Exception ex) {
 			ex.printStackTrace();
+			LocalLogger.write("error", "Error getJsPrint(" + script + "), " + ex.getMessage());
 			try { writer.close(); } catch (Exception e1) { }
 			throw ex;
 		}
@@ -307,10 +308,15 @@ public class CAR02 {
 			// list items affected by those schedules
 			HashMap<String, ArrayList<Item.Info>> mapScheduleInfo = new HashMap<String, ArrayList<Item.Info>>();
 			for (Schedule schedule : triggered) {
-
+				
+				
+				LocalLogger.write("info", "getNewlyCreatedItems(" + schedule.name + ") start");
+				
 				String siteName = allSites.get(schedule.siteSource).name;
 				
 				//IFileServer.FileServer server = map_server_map.get(siteName);
+				
+				
 				
 				boolean server_success = mserv_success.get(siteName);
 				if (!server_success) {
@@ -355,8 +361,11 @@ public class CAR02 {
 							infos.add(info);
 						}
 						
+						LocalLogger.write("info", "\t" + "getNewlyCreatedItems(" + schedule.name + "), Success Retrieving Files: " + infos.size());
+						
 					} catch (Exception ex) {
-						Client.addScheduleLog(schedule, Log.Type.ERROR, "Failed Retrieving Files", "" + ex);
+						
+						LocalLogger.write("error", "\t" + "getNewlyCreatedItems(" + schedule.name + "), Failed Retrieving Files: " + ex.getMessage());
 					}
 					
 					if (infos.size() > 0) {
@@ -415,8 +424,9 @@ public class CAR02 {
 						try {
 
 							// TODO real archive concurrently
+							LocalLogger.write("info", "real archive concurrently: siteName[" + siteName + "], folder[" + folder + "], fileName[" + fileName + "].");
 							long t_start = System.currentTimeMillis();
-							int _30_seconds = 30 * 1000;
+							int _30_seconds = 5 * 1000;
 							while ("" != null) {
 								Exception error = null;
 								try {
@@ -429,6 +439,12 @@ public class CAR02 {
 									error = ex;
 								}
 								
+								// In case "Permission denied" -> retry is useless, exit immediately
+								String error_text = error.getMessage();
+								if (error_text.toLowerCase().contains("Permission".toLowerCase()) || error_text.toLowerCase().contains("denied".toLowerCase())) {
+									throw error;
+								}
+								
 								long elapsed = System.currentTimeMillis() - t_start;
 								if (elapsed > _30_seconds) {
 									throw error;
@@ -437,7 +453,6 @@ public class CAR02 {
 								}
 							}
 							
-							
 							// -------------------------------------------------------------------------------------------- //
 							String arc_name_key = siteName + ":" + folder + ":" + fileName;
 							mapFileArcName.put(arc_name_key, fileNameArchive);
@@ -445,6 +460,7 @@ public class CAR02 {
 						} catch (Exception ex) {
 							// TODO, what do you do when it's permission denied?
 							//OL.sln("Error archiving in [" + siteName + ", " + folder + "]: " + ex);
+							LocalLogger.write("error", "Error archiving in [" + siteName + ", " + folder + "]: " + ex.getMessage());
 						}
 						
 					}
@@ -708,7 +724,8 @@ public class CAR02 {
 	
 	public static HashMap<String, ArrayList<String>> loop(String specific_schedule) throws Exception {
 		
-		System.out.println("------------------------------------------------------------------------------------");
+		// ----------------------------------------------------------------------------------------
+		LocalLogger.write("info", "---------------------------------------------------------------------------------------- loop begin");
 		
 		HashMap<String, ArrayList<String>> messages = null;
 		
@@ -723,20 +740,17 @@ public class CAR02 {
 			
 			// now
 			time_now = new Timestamp(Calendar.getInstance().getTimeInMillis());
-			System.out.println("time_now: " + time_now);
+			LocalLogger.write("info", "time_now: " + time_now);
 			
 			// all schedules
 			HashMap<String, Schedule> allSchedules = mapSchedules();
-			System.out.println("allSchedules: " + allSchedules.size());
+			LocalLogger.write("info", "allSchedules: " + allSchedules.size());
 			
 			// triggered schedules
 			ArrayList<Schedule> triggered = null;
 			if (specific_schedule != null) {
 				
 				Schedule ts = allSchedules.get(specific_schedule);
-				
-				
-				
 				if (ts == null) {
 					throw new Exception("\"" + specific_schedule + "\" does not exists.");
 				}
@@ -745,31 +759,35 @@ public class CAR02 {
 			} else {
 				triggered = getTriggeredSchedules(allSchedules);
 			}
-			System.out.println("triggered: " + triggered.size());
+			LocalLogger.write("info", "triggered: " + triggered.size());
+			for (int i = 0; i < triggered.size(); i++) { LocalLogger.write("info", "\t" + "triggered["+i+"]: " + triggered.get(i).name); }
 			
 			// all sites
 			HashMap<String, Site> allSites = mapSites();
-			System.out.println("allSites: " + allSites.size());
+			LocalLogger.write("info", "allSites: " + allSites.size());
 			
 			// list item in retry mode
 			HashMap<String, ArrayList<String>> itemsToRetry = new HashMap<String, ArrayList<String>>();
 			if (specific_schedule == null) {
 				itemsToRetry = getItemsForRetry(allSchedules, allSites);
+				LocalLogger.write("info", "itemsToRetry: " + itemsToRetry.size());
 			}
 			
 			// open server connections concurrently
+			LocalLogger.write("info", "opening servers...");
 			openServers(triggered, allSites);
 			
 			// new sessions
 			HashMap<Long, Session> newCreatedSessions = instantiateNewSessions(triggered);
-			System.out.println("sessionsToCreated: " + newCreatedSessions.size());
+			LocalLogger.write("info", "sessionsToCreated: " + newCreatedSessions.size());
 			
 			// list items to be created
 			ArrayList<Item> itemsToCreated = getNewlyCreatedItems(allSchedules, allSites, triggered, newCreatedSessions);
-			System.out.println("itemsToCreated: " + itemsToCreated.size());
+			LocalLogger.write("info", "itemsToCreated: " + itemsToCreated.size());
 			
 			// construct message for all items
 			messages = constructItemsMessage(itemsToCreated, allSchedules, allSites, mapSessionsDescription, true);
+			LocalLogger.write("info", "messages: " + messages.size());
 			
 			try {
 				
@@ -794,12 +812,17 @@ public class CAR02 {
 				removeSessionsWithoutItems();
 			}
 			
-		} catch (Exception ex) { ex.printStackTrace(); error = ex; }
+			LocalLogger.write("info", "---------------------------------------------------------------------------------------- loop end without errors");
+			
+		} catch (Exception ex) {
+			LocalLogger.write("error", "---------------------------------------------------------------------------------------- loop end with error: " + ex.getMessage());
+			ex.printStackTrace(); error = ex;
+		}
 		
 		// cleanup servers
 		closeServers();
 		
-		System.out.println("------------------------------------------------------------------------------------");
+		
 		
 		//IFileServer.ServerSFTP.printms();
 		
@@ -808,6 +831,8 @@ public class CAR02 {
 				throw error;
 			}
 		}
+		
+		
 		
 		return messages;
 	}
@@ -1010,7 +1035,7 @@ public class CAR02 {
     	
     	// /workspaces/default/items?time_start=20230714152700&time_stop=20230715032700&status=queued,executing,failed,success,dismiss
 
-    	byte[] bodyRaw = null;
+    	/*byte[] bodyRaw = null;
 		String method = "get";
 		String path = "/workspaces/default/items?time_start=20230712000000";
 		
@@ -1033,6 +1058,6 @@ public class CAR02 {
 		} catch (Exception ex) { ex.printStackTrace(); }
 		ZResult result = com.pttdigital.wtransfer.ZAPIV3.process(path, method, query, null, bodyRaw);
     	
-		OL.sln("result.content: " + result.content.length());
+		OL.sln("result.content: " + result.content.length());*/
     }
 }

@@ -166,11 +166,11 @@ function toggle_chb_use_lookback_custom_period() {
 	}
 }
 
-const callAPI = async (url_00) => {
+let callAPI = async (url_00) => {
 
 	document.getElementById("btn_submit").disabled = true;
 	document.getElementById("myTable").innerHTML = "";
-	const response_00 = await fetch(url_00, {
+	let response_00 = await fetch(url_00, {
 		method: 'GET',
 		headers: {
 			"Authorization": "Bearer " + token
@@ -178,7 +178,11 @@ const callAPI = async (url_00) => {
 	});
 	
 	
-	const myJson = await response_00.json();
+	let myJsonx = await response_00.json();
+	
+	let myJson = JSON.parse(JSON.stringify(myJsonx));
+	
+	
 	
 	
 	let unnecessaryFields = [
@@ -215,8 +219,7 @@ const callAPI = async (url_00) => {
 		"timeNextRetry",
 		"timeLatestRetry",
 		"retryQuota",
-		"retryRemaining",
-		"session"
+		"retryRemaining"
 	];
 	
 	let fieldRename = [
@@ -238,6 +241,8 @@ const callAPI = async (url_00) => {
 		}
 	];
 	
+	
+	
 	let objects = myJson["list"];
 	
 	
@@ -249,16 +254,6 @@ const callAPI = async (url_00) => {
 		
 		// load sessions, TODO
 		{
-			let arr_ss = [];
-			
-			for (let i = 0; i < objects.length; i++) {
-				let session = objects[i]["session"];
-				if (!arr_ss.includes[session]) {
-					arr_ss.push(session);
-				}
-			}
-			console.log(arr_ss.length);
-			
 			const response_01 = await fetch("https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/schedules", {
 				method: 'GET',
 				headers: {
@@ -266,7 +261,7 @@ const callAPI = async (url_00) => {
 				}
 			});
 			const myJson_01 = await response_01.json();
-			console.log(myJson_01["count"]);
+			
 		}
 		
 		
@@ -275,6 +270,8 @@ const callAPI = async (url_00) => {
 		
 		
 		
+		
+	
 		
 		
 		
@@ -285,9 +282,9 @@ const callAPI = async (url_00) => {
 		// re-order fields
 		{
 			for (let index_01 = 0; index_01 < objects.length; index_01++) {
-				let old_obj = objects[index_01];
-				let string_01 = JSON.stringify(objects[index_01]);
-				let json_01 = JSON.parse(string_01);
+			
+				// create new object
+				let json_01 = JSON.parse(JSON.stringify(objects[index_01]));
 				
 				// get all fields
 				let fields_01 = Object.keys(json_01);
@@ -297,32 +294,30 @@ const callAPI = async (url_00) => {
 					"session", 
 				];
 				
-				let new_obj = {};
+				let new_obj = JSON.parse("{}");
 				for (let i = 0; i < reo.length; i++) {
-					new_obj[reo[i]] = old_obj[reo[i]];
+					let fnam = reo[i];
+					let oldobj = objects[index_01];
+					new_obj[fnam] = oldobj[fnam];
+					
 				}
+				
 				
 				for (let i = 0; i < fields_01.length; i++) {
 					if (reo.includes(fields_01[i])) {
 						continue;
 					} else {
-						new_obj[fields_01[i]] = old_obj[fields_01[i]];
+						new_obj[fields_01[i]] = objects[index_01][fields_01[i]];
 					}
 				}
-				
 				
 				// add re-execute column
 				new_obj["action"] = "re-execute";
 				
 				objects[index_01] = new_obj;
+				
 			}
 		}
-	
-	
-	
-	
-	
-	
 	
 	
 	
@@ -337,15 +332,25 @@ const callAPI = async (url_00) => {
 		
 		// sample
 		let sample = objects[0];
-		
-		// delete unnecessary fields
-		for (let i = 0; i < unnecessaryFields.length; i++) {
-			delete sample[unnecessaryFields[i]];
-		}
+	
+		/*// delete unnecessary fields
+		{
+			for (let n = 0; n < objects.length; n++) {
+				for (let i = 0; i < unnecessaryFields.length; i++) {
+					delete objects[n][unnecessaryFields[i]];
+				}
+			}
+		}*/
 		
 		// assign thead
 		let thead = "";
 		let fields = Object.keys(sample);
+		
+		// remove unnecessary field, again ???
+		{
+			fields = fields.filter(m => !unnecessaryFields.includes(m));
+		}
+		
 		for (let i=0;i<fields.length;i++) {
 			let field = fields[i];
 			
@@ -364,6 +369,9 @@ const callAPI = async (url_00) => {
 		
 		// assign tbody
 		let tbody = "";
+		
+		
+		
 		for (let i=0;i<objects.length;i++) {
 			let obj = objects[i];
 			
@@ -404,15 +412,15 @@ const callAPI = async (url_00) => {
 					tmp_value = "<td><a target=\"_blank\" href=\"http://localhost:3000/sessions/" + sessionId + "/items/" + itemName + "\">" + tvalue + "</a></td>";
 				}*/
 				
-				if (j == 1) {
+				if (j == 2) {
 					tmp_value = "<td><a target=\"_blank\" href=\"http://localhost:3000/sessions/" + sessionId + "/items/" + itemName + "\" style=\"font-family: consolas;\">" + tvalue + "</a></td>";
 				}
 				
-				if (j == 3 && need_re_execute) {
+				if (j == 4 && need_re_execute) {
 					tmp_value =  "<td><span class=\"badge badge-warning rounded-pill d-inline\" style=\"padding:3px 10px 3px 10px; color: rgb(156, 0, 6); background-color:rgb(255, 199, 206);;\">" + tvalue + "</span></td>";
 				}
 				
-				if (j == 4) {
+				if (j == 5) {
 					if (need_re_execute) {
 						tmp_value = "<td><button type=\"button\" class=\"btn btn-primary\" style=\"padding:0px 5px 0px 5px; font-size:1.00em;\">re-execute</button></td>";
 					} else {
@@ -428,7 +436,6 @@ const callAPI = async (url_00) => {
 		}
 		tbody = "<tbody>" + tbody + "</tbody>";
 		let tall = thead + tbody;
-		//console.log(tall);
 		document.getElementById("myTable").innerHTML = tall;
 	} else {
 		alert("objects.length > 0 ---> false");
@@ -453,6 +460,14 @@ function submit_request() {
 		
 	
 	} else {
+	
+		// recalculate "now"
+		now = new Date();
+		now.setMinutes(now.getMinutes() + 1);
+	
+	
+	
+	
 		
 		let v1 = document.getElementsByName("optradio");
 		let nHours = -1;
@@ -483,13 +498,9 @@ function submit_request() {
 	if (t_api_from.length > 0 && t_api_to.length > 0) {
 		
 	} else {
-		console.log("t_api_from.length <= 0 || t_api_to.length <= 0");
 		return;
 	}
 	
-	console.log("from["+t_api_from+"] to["+t_api_to+"]");
-	
-	//console.log(document.getElementById("chb_01").checked);
 	let arr_status = "";
 	if (document.getElementById("chb_01").checked) { arr_status += document.getElementById("lb_chb_01").innerHTML + ","; }
 	if (document.getElementById("chb_02").checked) { arr_status += document.getElementById("lb_chb_02").innerHTML + ","; }

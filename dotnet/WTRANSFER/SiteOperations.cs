@@ -66,6 +66,7 @@ namespace WTRANSFER
                     "file.move_external",
                     "transfer",
                     "transfer_car03",
+                    "directory.transfer",
                 };
 
                 // action -> list, delete file, delete folder, move
@@ -300,6 +301,17 @@ namespace WTRANSFER
 
                 }
 
+                // directory.transfer
+                if (action == "directory.transfer")
+                {
+                    string transferMode = GetParam(json, "transferMode", true);
+                    string sourceServer = GetParam(json, "sourceServer", true);
+                    string sourceFile = GetParam(json, "sourceFolder", true);
+                    string targetServer = GetParam(json, "targetServer", true);
+                    string targetFile = GetParam(json, "targetFolder", true);
+                    return TestSpecialCasePSom_01.TestMoveEntireFolder(transferMode, sourceServer, sourceFile, targetServer, targetFile);
+                }
+
                 // server.close
                 if (action == "server.close")
                 {
@@ -325,9 +337,9 @@ namespace WTRANSFER
                     Content = Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object>
                     {
                         { "result", "failed" },
-                        { "error", Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, object> {
+                        { "error", new Dictionary<string, object> {
                             { "message", ex.Message },
-                        }) },
+                        } },
                     }),
                 };
             }

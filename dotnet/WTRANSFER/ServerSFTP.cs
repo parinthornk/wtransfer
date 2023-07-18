@@ -218,5 +218,56 @@ namespace WTRANSFER
         {
             Client.RenameFile(absPathOld, absPathNew);
         }
+
+        public Dictionary<string, bool> ListItemsNameRecursively(string folder)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void FolderDelete(string folder)
+        {
+            DeleteDirectory(Client, folder);
+        }
+
+        public void DeleteDirectory(SftpClient sftpClient, string directoryPath)
+        {
+            // Check if the target directory exists
+            if (!sftpClient.Exists(directoryPath))
+            {
+                throw new DirectoryNotFoundException($"Directory does not exist: {directoryPath}");
+            }
+
+            // Get the list of files and directories within the current directory
+            var directoryContents = sftpClient.ListDirectory(directoryPath);
+
+            // Iterate over each item in the directory
+            foreach (var item in directoryContents)
+            {
+                // Ignore "." and ".." directories
+                if (item.Name.Equals(".") || item.Name.Equals(".."))
+                {
+                    continue;
+                }
+
+                // Build the full path of the item
+                string itemPath = $"{directoryPath}/{item.Name}";
+
+                // Delete the item if it's a file
+                if (item.IsRegularFile)
+                {
+                    sftpClient.DeleteFile(itemPath);
+                    Console.WriteLine($"Deleted file: {itemPath}");
+                }
+                // Recursively delete the item if it's a directory
+                else if (item.IsDirectory)
+                {
+                    DeleteDirectory(sftpClient, itemPath);
+                }
+            }
+
+            // Delete the current directory once all its contents have been deleted
+            sftpClient.DeleteDirectory(directoryPath);
+            Console.WriteLine($"Deleted directory: {directoryPath}");
+        }
     }
 }

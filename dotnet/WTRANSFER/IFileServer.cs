@@ -105,6 +105,9 @@ namespace WTRANSFER
         Stream GetStreamSend(string path);
         Stream GetStreamReceive(string path);
         void FileRename(string before, string after);
+        void FolderDelete(string folder);
+
+        Dictionary<string, bool> ListItemsNameRecursively(string folder);
     }
 
     public class SessionManager

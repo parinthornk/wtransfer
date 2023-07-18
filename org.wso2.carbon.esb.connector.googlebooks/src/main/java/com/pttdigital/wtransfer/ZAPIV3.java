@@ -787,16 +787,16 @@ public class ZAPIV3 {
 			}
 			// TODO: ----------------------------------------------------------------------------------------------------> sync_transfer
 			if (match(path, method, "/workspaces/*/synchronous-operations/transfer, post")) {
-				String workspace = getFromPathParamsAsString(path, 1);
+				//String workspace = getFromPathParamsAsString(path, 1);
 				JsonObject o = null; try { o = new Gson().fromJson(new String(bodyRaw), JsonObject.class); } catch (Exception ex) { return ZResult.ERROR_400(new Exception("Failed to parse the request into JSON.")); }
-		    	String transferMode = null; try { transferMode = o.get("transferMode").getAsString(); } catch (Exception ex) { } if (transferMode == null) { return ZResult.ERROR_400(new Exception("Parameter \"transferMode\" is required.")); }
-		    	String sourceServer = null; try { sourceServer = o.get("sourceServer").getAsString(); } catch (Exception ex) { } if (sourceServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceServer\" is required.")); }
-		    	String sourceFile = null; try { sourceFile = o.get("sourceFile").getAsString(); } catch (Exception ex) { } if (sourceFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceFile\" is required.")); }
-		    	String targetServer = null; try { targetServer = o.get("targetServer").getAsString(); } catch (Exception ex) { } if (targetServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetServer\" is required.")); }
-		    	String targetFile = null; try { targetFile = o.get("targetFile").getAsString(); } catch (Exception ex) { } if (targetFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetFile\" is required.")); }
+		    	//String transferMode = null; try { transferMode = o.get("transferMode").getAsString(); } catch (Exception ex) { } if (transferMode == null) { return ZResult.ERROR_400(new Exception("Parameter \"transferMode\" is required.")); }
+		    	//String sourceServer = null; try { sourceServer = o.get("sourceServer").getAsString(); } catch (Exception ex) { } if (sourceServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceServer\" is required.")); }
+		    	//String sourceFile = null; try { sourceFile = o.get("sourceFile").getAsString(); } catch (Exception ex) { } if (sourceFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"sourceFile\" is required.")); }
+		    	//String targetServer = null; try { targetServer = o.get("targetServer").getAsString(); } catch (Exception ex) { } if (targetServer == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetServer\" is required.")); }
+		    	//String targetFile = null; try { targetFile = o.get("targetFile").getAsString(); } catch (Exception ex) { } if (targetFile == null) { return ZResult.ERROR_400(new Exception("Parameter \"targetFile\" is required.")); }
 		    	
 		    	// call service http://127.0.0.1:62580/custom-file-server/site-operations
-		    	o.addProperty("action", "transfer");
+		    	//o.addProperty("action", "transfer");
 		    	
 		    	JsonElement e = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, o);
 		    	
