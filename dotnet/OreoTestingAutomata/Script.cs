@@ -284,8 +284,8 @@ namespace OreoTestingAutomata
             Robot.SetMousePosition(icon_filezilla_position[0] + pos_connect[0], icon_filezilla_position[1] + pos_connect[1]);
             Robot.Wait(300);
             Robot.LeftClick();
-            Robot.Wait(300);
-            Robot.LeftClick();
+            //Robot.Wait(300);
+            //Robot.LeftClick();
             Robot.Wait(1300);
 
             // if prompted
@@ -729,14 +729,17 @@ namespace OreoTestingAutomata
             //AutoInfo("H2O_AutoReconcile_UOB_CS-BC_OR_UOB-SFTP_Receiver_OR_AutoReconcile_UOBMonthly_CC-REF974", "ZPIFII017", 9, false);
 
 
-            AutoInfo("ECC_FileTransfer_CS-BS_ERP_ECP100-BC_OR_EV-21", "ZPISDI150", 0, true);
-            AutoInfo("ECC_FileTransfer_CS-BC_OR_EV-BS_ERP_ECP100-176-REF1849", "ZPISDI150", 1, true);
+            //AutoInfo("ECC_FileTransfer_CS-BS_ERP_ECP100-BC_OR_EV-21", "ZPISDI150", 0, true);
+            //AutoInfo("ECC_FileTransfer_CS-BC_OR_EV-BS_ERP_ECP100-176-REF1849", "ZPISDI150", 1, true);
 
 
 
             // ---------------------------------------------------------------- 2023-07-13 end
 
-
+            //AutoInfo("H2O_AutoReconcile_SCB_CS-BC_OR_SCB-SFTP_Receiver_OR_AutoReconcile_SCBSFTP_CC-REF1748", "ZPIFII014", 14, true);
+            //AutoInfo("H2O_AutoReconcile_BAY_CS-BC_OR_BAY-SFTP_Receiver_OR_AutoReconcile_BAYMonthly_CC-REF2112", "ZPIFII014", 19, true);
+            //AutoInfo("H2O_AutoReconcile_SCB_CS-BC_OR_SFTP-SFTP_Receiver_OR_AutoReconcile_SCBMonthly_CC-REF2159", "ZPIFII014", 20, true);
+            //AutoInfo("H2O_AutoReconcile_BBL_CS-BC_OR_BBL-SFTP_Receiver_OR_AutoReconcile_BBLMonthly_CC-REF2169", "ZPIFII014", 21, true);
 
 
 

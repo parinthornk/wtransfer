@@ -273,7 +273,10 @@ public class CAR02 {
 						success = true;
 					} catch (Exception ex) {
 						//ex.printStackTrace();
+						
+						LocalLogger.write("error", "Error in openServers(), Failed to connect to site \"" + sn + "\". " + ex.getMessage());
 					}
+					
 					synchronized (mserv_success_locker) {
 						mserv_success.put(sn, success);
 						//OL.sln("mserv_success.put("+sn+", "+success+");");
@@ -321,6 +324,9 @@ public class CAR02 {
 				boolean server_success = mserv_success.get(siteName);
 				if (!server_success) {
 					mapScheduleInfo.put(schedule.name, null);
+					
+					LocalLogger.write("error", "\t" + "getNewlyCreatedItems(" + schedule.name + "). Site \"" + siteName + "\" was marked as unreachable and will be ignored.");
+					
 				} else {
 
 					ArrayList<Item.Info> infos = new ArrayList<Item.Info>();
@@ -439,9 +445,14 @@ public class CAR02 {
 									error = ex;
 								}
 								
-								// In case "Permission denied" -> retry is useless, exit immediately
+								// In case "Permission denied" -> retry is useless, throw immediately
 								String error_text = error.getMessage();
 								if (error_text.toLowerCase().contains("Permission".toLowerCase()) || error_text.toLowerCase().contains("denied".toLowerCase())) {
+									throw error;
+								}
+								
+								// In case "no such file" -> retry is useless, throw immediately
+								if (error_text.toLowerCase().contains("no such file".toLowerCase())) {
 									throw error;
 								}
 								
@@ -496,7 +507,7 @@ public class CAR02 {
 						item.timeLatestRetry = _1970;
 						//item.fnCallback = schedule.callback;// TODO
 						item.description = session.description;
-						item.fileName = info.name;
+						item.fileName = evalTargetFileName(info.name, schedule.fnRenameTo);
 						item.folder = schedule.staticDirSource;
 						
 						
@@ -582,6 +593,15 @@ public class CAR02 {
 	
 
 
+	private static String evalTargetFileName(String originalName, String fnRenameTo) {
+		try {
+			return getJsPrint("var fn = " + fnRenameTo + ";print(fn(\"" + originalName + "\"));");
+		} catch (Exception ex) {
+			LocalLogger.write("error", "Failed to evalTargetFileName(\""+originalName+"\", \""+fnRenameTo+"\"): " + ex.getMessage() + ", The file will keep its original name \""+originalName+"\".");
+			return originalName;
+		}
+	}
+
 	private static HashMap<String, ArrayList<String>> constructItemsMessage(ArrayList<Item> itemsToCreated, HashMap<String, Schedule> allSchedules, HashMap<String, Site> allSites, HashMap<String, Session> _mapSessionsDescription, boolean useMapItemDescription) throws Exception, IllegalArgumentException, IllegalAccessException {
 		// eyJpdGVtIjp7IndvcmtzcGFjZSI6ImRlZmF1bHQiLCJmaWxlTmFtZSI6ImZpbGVfZXhhbXBsZV9YTFNYXzJNQi0wMDAwLnhsc3giLCJyZXRyeVJlbWFpbmluZyI6NiwiZmlsZU5hbWVBcmNoaXZlIjoiZmlsZV9leGFtcGxlX1hMU1hfMk1CLTAwMDAueGxzeC4yMDIzMDYyMDE3MjQwMS5hcmMiLCJzZXNzaW9uIjo3Mzc2MTU0LCJjcmVhdGVkIjoiMjAyMy0wNi0yMCAxNzoyNDowMSIsInJldHJ5SW50ZXJ2YWxNcyI6NjAwMDAsImRlc2NyaXB0aW9uIjoiQXV0by1nZW5lcmF0ZWQgYnkgc2NoZWR1bGUgdGVzdC16cGFyaW50aG9ybmstMDYyMC4gWzJmYjExMDUyNzA5YzQ5ZTE4NWM5MWQ2ZTllNWEyZWE3XSIsImZuQ2FsbGJhY2siOm51bGwsImZvbGRlciI6Ii9TYXBGYXgvQ05ETkRBVEEiLCJ0aW1lTGF0ZXN0UmV0cnkiOiIxOTcwLTAxLTAxIDAwOjAwOjAwIiwibmFtZSI6ImRjZmQ0YWNhZWMzNjQ3MmM5OGEyYjg4NGU5Zjg3Zjc2IiwibW9kaWZpZWQiOiIyMDIzLTA2LTIwIDE3OjI0OjA0IiwicmV0cnlRdW90YSI6NSwiZm9sZGVyQXJjaGl2ZSI6Ii9TYXBGYXgvQ05ETkRBVEEvQXJjaGl2ZSIsInRpbWVOZXh0UmV0cnkiOiIxOTcwLTAxLTAxIDAwOjAwOjAwIiwic3RhdHVzIjoiV0FJVElOR19GT1JfUkVUUlkifSwic2Vzc2lvbiI6eyJzY2hlZHVsZSI6InRlc3QtenBhcmludGhvcm5rLTA2MjAiLCJ3b3Jrc3BhY2UiOiJkZWZhdWx0IiwiY3JlYXRlZCI6IjIwMjMtMDYtMjAgMTc6MjQ6MDEiLCJkZXNjcmlwdGlvbiI6IkF1dG8tZ2VuZXJhdGVkIGJ5IHNjaGVkdWxlIHRlc3QtenBhcmludGhvcm5rLTA2MjAuIFsyZmIxMTA1MjcwOWM0OWUxODVjOTFkNmU5ZTVhMmVhN10iLCJtb2RpZmllZCI6IjIwMjMtMDYtMjAgMTc6MjQ6MDEiLCJyZW1hcmsiOm51bGwsImlkIjo3Mzc2MTU0LCJzdGF0dXMiOiJDUkVBVEVEIn0sInNjaGVkdWxlIjp7IndvcmtzcGFjZSI6ImRlZmF1bHQiLCJwZ3BLZXlQYXRoIjpudWxsLCJkZXNjcmlwdGlvbiI6IiIsInBncERpcmVjdGlvbiI6bnVsbCwidmFsaWRGcm9tIjpudWxsLCJlbmFibGVkIjp0cnVlLCJzdGF0aWNEaXJTb3VyY2UiOiIvU2FwRmF4L0NORE5EQVRBIiwiZm5Jc0ZpbGVUb01vdmUiOiJmdW5jdGlvbih4KXtyZXR1cm4geC50b0xvd2VyQ2FzZSgpLmVuZHNXaXRoKFwiLmNzdlwiKSB8fCB4LnRvTG93ZXJDYXNlKCkuZW5kc1dpdGgoXCIueGxzeFwiKSB8fCB4LnRvTG93ZXJDYXNlKCkuZW5kc1dpdGgoXCIudHh0XCIpO30iLCJmblBncFJlbmFtZVRvIjpudWxsLCJtb2RpZmllZCI6IjIwMjMtMDYtMjAgMTg6MjA6MjEiLCJmbkFyY2hpdmVSZW5hbWVUbyI6bnVsbCwicGxhbiI6IiotKi0qICo6MDA6MDAsKi0qLSogKjowMTowMCwqLSotKiAqOjAyOjAwLCotKi0qICo6MDM6MDAsKi0qLSogKjowNDowMCwqLSotKiAqOjA1OjAwLCotKi0qICo6MDY6MDAsKi0qLSogKjowNzowMCwqLSotKiAqOjA4OjAwLCotKi0qICo6MDk6MDAsKi0qLSogKjoxMDowMCwqLSotKiAqOjExOjAwLCotKi0qICo6MTI6MDAsKi0qLSogKjoxMzowMCwqLSotKiAqOjE0OjAwLCotKi0qICo6MTU6MDAsKi0qLSogKjoxNjowMCwqLSotKiAqOjE3OjAwLCotKi0qICo6MTg6MDAsKi0qLSogKjoxOTowMCwqLSotKiAqOjIwOjAwLCotKi0qICo6MjE6MDAsKi0qLSogKjoyMjowMCwqLSotKiAqOjIzOjAwLCotKi0qICo6MjQ6MDAsKi0qLSogKjoyNTowMCwqLSotKiAqOjI2OjAwLCotKi0qICo6Mjc6MDAsKi0qLSogKjoyODowMCwqLSotKiAqOjI5OjAwLCotKi0qICo6MzA6MDAsKi0qLSogKjozMTowMCwqLSotKiAqOjMyOjAwLCotKi0qICo6MzM6MDAsKi0qLSogKjozNDowMCwqLSotKiAqOjM1OjAwLCotKi0qICo6MzY6MDAsKi0qLSogKjozNzowMCwqLSotKiAqOjM4OjAwLCotKi0qICo6Mzk6MDAsKi0qLSogKjo0MDowMCwqLSotKiAqOjQxOjAwLCotKi0qICo6NDI6MDAsKi0qLSogKjo0MzowMCwqLSotKiAqOjQ0OjAwLCotKi0qICo6NDU6MDAsKi0qLSogKjo0NjowMCwqLSotKiAqOjQ3OjAwLCotKi0qICo6NDg6MDAsKi0qLSogKjo0OTowMCwqLSotKiAqOjUwOjAwLCotKi0qICo6NTE6MDAsKi0qLSogKjo1MjowMCwqLSotKiAqOjUzOjAwLCotKi0qICo6NTQ6MDAsKi0qLSogKjo1NTowMCwqLSotKiAqOjU2OjAwLCotKi0qICo6NTc6MDAsKi0qLSogKjo1ODowMCwqLSotKiAqOjU5OjAwIiwidXNlRHluYW1pY0RpclNvdXJjZSI6ZmFsc2UsImZuUmVuYW1lVG8iOiJmdW5jdGlvbih4KXtyZXR1cm4geDt9Iiwic2l0ZVNvdXJjZSI6ImRjbG91ZC1zZnRwIiwicmV0cnlDb3VudCI6NSwiY3JlYXRlZCI6IjIwMjMtMDYtMjAgMTc6MTc6MzciLCJpc1BlbmRpbmdBZEhvYyI6ZmFsc2UsInJldHJ5SW50ZXJ2YWxNcyI6NjAwMDAsInNpdGVUYXJnZXQiOiJsZWdhY3ktZmE1MzY3ZWMtYmU2OS00MmZhLTg0NjUtNjNmMTIyYmQ3YmFmIiwiZm5EeW5hbWljRGlyVGFyZ2V0IjpudWxsLCJwcmV2aW91c0NoZWNrcG9pbnQiOiIyMDIzLTA2LTIwIDE4OjIwOjIxIiwic3RhdGljRGlyVGFyZ2V0IjoiL25vdF9leGlzdHMvU2FwRmF4L0NORE5EQVRBL25vdF9leGlzdHMiLCJhcmNoaXZlRm9sZGVyIjoiL2FyY2hpdmUiLCJmbkR5bmFtaWNEaXJTb3VyY2UiOm51bGwsInBncEtleVBhc3N3b3JkIjpudWxsLCJuYW1lIjoidGVzdC16cGFyaW50aG9ybmstMDYyMCIsInZhbGlkVW50aWwiOm51bGwsInVzZUR5bmFtaWNEaXJUYXJnZXQiOmZhbHNlLCJ3b3JrZXJUaHJlYWRzIjo1fSwic2l0ZVNvdXJjZSI6eyJ3b3Jrc3BhY2UiOiJkZWZhdWx0IiwicHJvdG9jb2wiOiJzZnRwIiwicGFzc3dvcmQiOiJXU08yREBzZnRwIzk5IiwicG9ydCI6MjIsImNyZWF0ZWQiOiIyMDIzLTA0LTIwIDEyOjI4OjU5Iiwia2V5UGF0aCI6IiIsIm5hbWUiOiJkY2xvdWQtc2Z0cCIsImhvc3QiOiJvci1zZnRwc2Vydi10MDEucHR0b3IuY29tIiwiZGVzY3JpcHRpb24iOiIiLCJtb2RpZmllZCI6IjIwMjMtMDQtMjUgMTI6MjQ6MzgiLCJ1c2VybmFtZSI6InNmdHBfd3NvMmRfb3JlbyJ9LCJzaXRlVGFyZ2V0Ijp7IndvcmtzcGFjZSI6ImRlZmF1bHQiLCJwcm90b2NvbCI6ImZ0cCIsInBhc3N3b3JkIjoiY2NuZG51c3IiLCJwb3J0IjoyMSwiY3JlYXRlZCI6IjIwMjMtMDQtMjAgMTI6Mjg6NTgiLCJrZXlQYXRoIjpudWxsLCJuYW1lIjoibGVnYWN5LWZhNTM2N2VjLWJlNjktNDJmYS04NDY1LTYzZjEyMmJkN2JhZiIsImhvc3QiOiIxNzIuMjMuMTYuNTUiLCJkZXNjcmlwdGlvbiI6bnVsbCwibW9kaWZpZWQiOiIyMDIzLTA0LTIwIDEyOjI4OjU4IiwidXNlcm5hbWUiOiJjbmRudXNyIn19
 		HashMap<String, ArrayList<String>> messages = new HashMap<String, ArrayList<String>>();
@@ -615,7 +635,7 @@ public class CAR02 {
 		}
 		return messages;
 	}
-	
+
 	private static ArrayList<Item> getItemsToRetry() {
 		// TODO Auto-generated method stub
 		return new ArrayList<Item>();

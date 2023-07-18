@@ -279,6 +279,8 @@ namespace WTRANSFER
 
                     var item = json["item"];
 
+                    var schedule = json["schedule"];
+
                     var transferMode = "COPY";
 
                     var siteSourceInfo = SiteInfo.FromJsonString(json["siteSource"].ToString());
@@ -287,15 +289,15 @@ namespace WTRANSFER
 
                     string? sourceFile = item["folderArchive"] + "/" + item["fileNameArchive"];
 
-                    string? targetFile = json["schedule"]["staticDirTarget"] + "/" + item["fileName"];
+                    string? targetFile = schedule["staticDirTarget"] + "/" + item["fileName"];
 
-                    string? pgpDirection = null;
+                    string? pgpDirection = schedule["pgpDirection"];
 
-                    string? pgpPublicKeyPath = null;
+                    string? pgpPublicKeyPath = schedule["pgpKeyPath"];
 
-                    string? pgpPrivateKeyPath = null;
+                    string? pgpPrivateKeyPath = schedule["pgpKeyPath"];
 
-                    string? pgpPassword = null;
+                    string? pgpPassword = schedule["pgpKeyPassword"];
 
                     return Transfer.Execute(transferMode, siteSourceInfo, sourceFile, siteTargetInfo, targetFile, pgpDirection, pgpPublicKeyPath, pgpPrivateKeyPath, pgpPassword, item);
 
