@@ -183,8 +183,10 @@ public class ZAPIV3 {
 						JsonObject p1 = new JsonObject();
 						p1.addProperty("action", "server.open");
 						p1.addProperty("site", site);
-						session_id = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1).getAsJsonObject().get("id").getAsString();						
-					} catch(Exception ex) { }
+						JsonObject jo = Client.getJsonResponse(ZConnector.Constant.CUSTOM_FILE_SERVER_ENDPOINT, "POST", null, p1).getAsJsonObject();
+						OL.sln(jo);
+						session_id = jo.get("id").getAsString();						
+					} catch(Exception ex) { ex.printStackTrace(); }
 				}
 				
 				if (session_id.length() == 0) {
@@ -275,7 +277,9 @@ public class ZAPIV3 {
 				String keyChild = "id";
 				String keyChildLookupMother = "schedule";
 				String countColoumnName = "sessions";
-				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+";";
+				String sql = "SELECT "+schema+".\""+tableMother+"\".*, COUNT("+schema+".\""+tableChild+"\"."+keyChild+") AS "+countColoumnName+" FROM "+schema+".\""+tableMother+"\" LEFT JOIN "+schema+".\""+tableChild+"\" ON "+schema+".\""+tableMother+"\"."+keyMother+" = "+schema+".\""+tableChild+"\".\""+keyChildLookupMother+"\" and "+schema+".\""+tableMother+"\"."+keyWorkspace+" = "+schema+".\""+tableChild+"\"."+keyWorkspace+" where "+schema+".\""+tableMother+"\"."+keyWorkspace+" = '"+workspace+"' GROUP BY "+schema+".\""+tableMother+"\"."+keyMother+" order by \""+Schedule.wordName+"\";";
+				
+				
 				
 				
 				JsonElement e = DB.executeList(sql);

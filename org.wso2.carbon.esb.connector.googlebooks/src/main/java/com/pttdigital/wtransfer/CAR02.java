@@ -1042,6 +1042,14 @@ public class CAR02 {
 	}
 	
     public static void main(String[] args) throws Exception {
+    	
+    	
+    	
+    	
+    	
+    	String c = ZAPIV3.process("/workspaces/default/schedules", "get", null, null, (byte[])null).content;
+    	OL.sln(c.length());
+    	
 
     	/*long _24_hours = 48 * 60 * 60 * 1000;
     	

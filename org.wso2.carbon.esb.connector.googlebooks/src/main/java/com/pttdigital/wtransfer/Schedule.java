@@ -41,6 +41,7 @@ public class Schedule {
 	public boolean isPendingAdHoc;
 	
 	public static final String wordPlan = "plan";
+	public static final String wordName = "name";
 	
 	private static HashMap<String, Integer> _mapMonth = null;
 	private static HashMap<String, Integer> mapMonth() {

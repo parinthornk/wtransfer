@@ -83,7 +83,7 @@ namespace WTRANSFER
                 // server.open
                 if (action == "server.open")
                 {
-                    var site = GetParam(json, "site", true).ToLower();
+                    string site = GetParam(json, "site", true);
                     var fileServer = FileServer.GetByName(site);
                     fileServer.Open();
                     string id = Guid.NewGuid().ToString();

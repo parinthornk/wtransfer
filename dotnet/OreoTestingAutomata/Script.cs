@@ -741,13 +741,82 @@ namespace OreoTestingAutomata
             //AutoInfo("H2O_AutoReconcile_SCB_CS-BC_OR_SFTP-SFTP_Receiver_OR_AutoReconcile_SCBMonthly_CC-REF2159", "ZPIFII014", 20, true);
             //AutoInfo("H2O_AutoReconcile_BBL_CS-BC_OR_BBL-SFTP_Receiver_OR_AutoReconcile_BBLMonthly_CC-REF2169", "ZPIFII014", 21, true);
 
-
+            //AutoInfo("H2O_BankPayment_KTB_CycleTime_CS-BS_ERP_ECP100-BC_OR_FTP-REF613", "ZPIFII008", 0, true);
+            //AutoInfo("H2O_BankPayment_KTB_CycleTime_CS-BS_ERP_ECP100-BC_OR_KTB-17", "ZPIFII008", 1, true);
 
             /*// outbound
             AutoInfo("ECC_FileTransfer_CS-BS_ERP_ECP100-BC_OR_EV-21", "ZPISDI136", 0);
 
             // inbound
             */
+
+
+
+
+
+
+
+            // ------------------------------------------------------------------------------------------------------------ mass AutoReconcile execution 2023-07-19 begin
+            AutoInfo("H2O_AutoReconcile_BAY_CS-AUTO-REJECT", "ZPIFII014", 0);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-AUTO-ERROR", "ZPIFII014", 1);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-AUTO-BACKUP", "ZPIFII014", 2);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-AUTO-REPORT", "ZPIFII014", 3);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-MANUAL-ManualDownload", "ZPIFII014", 4);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-MANUAL-REJECT", "ZPIFII014", 5);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-MANUAL-ECC256FORMAT", "ZPIFII014", 6);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-MANUAL-ERROR", "ZPIFII014", 7);
+            AutoInfo("H2O_AutoReconcile_BAY_CS-MONTHLY", "ZPIFII014", 8);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-AUTO-REJECT", "ZPIFII014", 9);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-AUTO-ERROR", "ZPIFII014", 10);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-AUTO-BACKUP", "ZPIFII014", 11);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-AUTO-REPORT", "ZPIFII014", 12);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-MANUAL-ManualDownload", "ZPIFII014", 13);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-MANUAL-REJECT", "ZPIFII014", 14);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-MANUAL-ECC256FORMAT", "ZPIFII014", 15);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-MANUAL-ERROR", "ZPIFII014", 16);
+            AutoInfo("H2O_AutoReconcile_BBL_CS-MONTHLY", "ZPIFII014", 17);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-AUTO-REJECT", "ZPIFII014", 18);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-AUTO-ERROR", "ZPIFII014", 19);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-AUTO-BACKUP", "ZPIFII014", 20);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-AUTO-REPORT", "ZPIFII014", 21);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-MANUAL-ManualDownload", "ZPIFII014", 22);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-MANUAL-REJECT", "ZPIFII014", 23);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-MANUAL-ECC256FORMAT", "ZPIFII014", 24);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-MANUAL-ERROR", "ZPIFII014", 25);
+            AutoInfo("H2O_AutoReconcile_KTB_CS-MONTHLY", "ZPIFII014", 26);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-AUTO-REJECT", "ZPIFII014", 27);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-AUTO-ERROR", "ZPIFII014", 28);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-AUTO-BACKUP", "ZPIFII014", 29);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-AUTO-REPORT", "ZPIFII014", 30);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-MANUAL-ManualDownload", "ZPIFII014", 31);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-MANUAL-REJECT", "ZPIFII014", 32);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-MANUAL-ECC256FORMAT", "ZPIFII014", 33);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-MANUAL-ERROR", "ZPIFII014", 34);
+            AutoInfo("H2O_AutoReconcile_SCB_CS-MONTHLY", "ZPIFII014", 35);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-AUTO-REJECT", "ZPIFII014", 36);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-AUTO-ERROR", "ZPIFII014", 37);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-AUTO-BACKUP", "ZPIFII014", 38);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-AUTO-REPORT", "ZPIFII014", 39);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-MANUAL-ManualDownload", "ZPIFII014", 40);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-MANUAL-REJECT", "ZPIFII014", 41);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-MANUAL-ECC256FORMAT", "ZPIFII014", 42);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-MANUAL-ERROR", "ZPIFII014", 43);
+            AutoInfo("H2O_AutoReconcile_UOB_CS-MONTHLY", "ZPIFII014", 44);
+            // ------------------------------------------------------------------------------------------------------------ mass AutoReconcile execution 2023-07-19 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             if ("".Length == 0)
             {
