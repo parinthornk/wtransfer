@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <title>WTRANSFER | Item</title>
+  <title>WTRANSFER | Events</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
@@ -23,41 +23,54 @@
 
 
 	<div style="margin-left:75px;margin-right:75px; font-size:0.75em;">
-		<h3 id="head-schedule"> / <a href="http://localhost:3000/items-summary">items-summary</a></h3>
-		<p>List of file transfer items. For transfer schedules, <a href="http://localhost:3000/schedules" class="link-primary">click here</a>.</p>
+		<h3 id="head-schedule"> / <a href="http://localhost:3000/items-summary">events</a></h3>
+		<p>List of file transfer events. For transfer schedules, <a href="http://localhost:3000/schedules" class="link-primary">click here</a>.</p>
 		
 			
 			
 		<form>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_01" name="chb_01" checked>
-				<label id="lb_chb_01" for="chb_01">CREATED</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_02" name="chb_02" checked>
-				<label id="lb_chb_02" for="chb_02">QUEUED</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_03" name="chb_03" checked>
-				<label id="lb_chb_03" for="chb_03">ERROR_ENQUEUE</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_04" name="chb_04" checked>
-				<label id="lb_chb_04" for="chb_04">DEQUEUED</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_05" name="chb_05" checked>
-				<label id="lb_chb_05" for="chb_05">EXECUTING</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_06" name="chb_06" checked>
-				<label id="lb_chb_06" for="chb_06">WAITING_FOR_RETRY</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_07" name="chb_07" checked>
-				<label id="lb_chb_07" for="chb_07">FAILED</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_08" name="chb_08" checked>
-				<label id="lb_chb_08" for="chb_08">SUCCESS</label>
-			</div>
-			<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_09" name="chb_09" checked>
-				<label id="lb_chb_09" for="chb_09">DISMISS</label>
-			</div>
 			
-			<br/>
+			<table class="table" style="width:50%;">
+				<tr>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th>
+						<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_01" name="chb_01" checked>
+							<label id="lb_chb_01" for="chb_01">DEBUG</label>
+						</div>
+						<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_02" name="chb_02" checked>
+							<label id="lb_chb_02" for="chb_02">INFO</label>
+						</div>
+						<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_03" name="chb_03" checked>
+							<label id="lb_chb_03" for="chb_03">WARNING</label>
+						</div>
+						<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_04" name="chb_04" checked>
+							<label id="lb_chb_04" for="chb_04">ERROR</label>
+						</div>
+						<div class="form-check"><input type="checkbox" class="form-check-input" id="chb_05" name="chb_05" checked>
+							<label id="lb_chb_05" for="chb_05">FATAL</label>
+						</div>
+					</th>
+					<th>
+						<div class="form-group">
+							<label for="f_search_source">Source: </label>
+							<input class="form-control" type="text" id="f_search_source" name="f_search_source"><br>
+							
+							<label for="f_search_description">Description: </label>
+							<input class="form-control" type="text" id="f_search_description" name="f_search_description">
+						</div>
+					</th>
+					<th></th>
+					<th></th>
+					<th></th>
+			  </tr>
+			</table>
+		
+			
+			<table class="table" style="width:50%;"><tr><th></th></tr></table>
+			
+			
 			
 			<div class="form-check">
 				<input type="radio" class="form-check-input" id="radio1" name="optradio" value="1" checked>
@@ -104,6 +117,11 @@
 			
 			
 			<button type="button" class="btn btn-primary" onclick="submit_request()" id="btn_submit" style="margin-bottom:25px; margin-left:0px;">Apply</button>
+			
+			<button type="button" class="btn" onclick="submit_request_left()" id="btn_submit_left" style="margin-bottom:25px; margin-left:0px;"><< previous page</button>
+			<button type="button" class="btn" onclick="submit_request_center()" id="btn_submit_center" style="margin-bottom:25px; margin-left:0px;"></button>
+			<button type="button" class="btn" onclick="submit_request_right()" id="btn_submit_right" style="margin-bottom:25px; margin-left:0px;">next page >></button>
+			
 		</form>
 		
 		<table class="table table-condensed table-hover" id="myTable" style="font-family: consolas;">
@@ -117,6 +135,7 @@
 
 let token = "{access_token}";
 
+
 let now = new Date();
 now.setMinutes(now.getMinutes() + 1);
 
@@ -125,6 +144,8 @@ oneHourPrior.setHours(now.getHours() - 1);
 
 document.getElementById("calendar_from").value = get_format_calendar(oneHourPrior);
 document.getElementById("calendar_to").value = get_format_calendar(now);
+
+inactive_pagination_buttons();
 
 function get_format_calendar(myDate) {
 	let year = myDate.getFullYear();
@@ -167,8 +188,12 @@ function toggle_chb_use_lookback_custom_period() {
 }
 
 let callAPI = async (url_00) => {
-
+	
+	inactive_pagination_buttons();
 	document.getElementById("btn_submit").disabled = true;
+	inactive_pagination_buttons();
+	
+	
 	document.getElementById("myTable").innerHTML = "";
 	let response_00 = await fetch(url_00, {
 		method: 'GET',
@@ -247,115 +272,28 @@ let callAPI = async (url_00) => {
 	
 	
 	
-	let objects = myJson["list"];
+	let objects = myJson["events"];
+	
+	
 	
 	
 	
 	if (objects.length > 0) {
-		
-		
-		
-		
-		// load sessions, TODO
-		{
-			const response_01 = await fetch("https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/schedules", {
-				method: 'GET',
-				headers: {
-					"Authorization": "Bearer " + token
-				}
-			});
-			const myJson_01 = await response_01.json();
-			
-		}
-		
-		
-		
-		
-		
-		
-		
-		
 	
-		
-		
-		
-	
-		// reverse??
-		objects.reverse();
-		
-		// re-order fields
-		{
-			for (let index_01 = 0; index_01 < objects.length; index_01++) {
-			
-				// create new object
-				let json_01 = JSON.parse(JSON.stringify(objects[index_01]));
-				
-				// get all fields
-				let fields_01 = Object.keys(json_01);
-				
-				let reo = [
-					"created", 
-					"description", 
-					"session", 
-				];
-				
-				let new_obj = JSON.parse("{}");
-				for (let i = 0; i < reo.length; i++) {
-					let fnam = reo[i];
-					let oldobj = objects[index_01];
-					new_obj[fnam] = oldobj[fnam];
-					
-				}
-				
-				
-				for (let i = 0; i < fields_01.length; i++) {
-					if (reo.includes(fields_01[i])) {
-						continue;
-					} else {
-						new_obj[fields_01[i]] = objects[index_01][fields_01[i]];
-					}
-				}
-				
-				// add re-execute column
-				new_obj["action"] = "re-execute";
-				
-				objects[index_01] = new_obj;
-				
-			}
-		}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		setMaxPage(myJson["pagination"]["pagesTotal"]);
+		setCurrentPage(myJson["pagination"]["pageCurrent"]);
 		
 		// sample
 		let sample = objects[0];
-	
-		/*// delete unnecessary fields
-		{
-			for (let n = 0; n < objects.length; n++) {
-				for (let i = 0; i < unnecessaryFields.length; i++) {
-					delete objects[n][unnecessaryFields[i]];
-				}
-			}
-		}*/
+		
+		// delete unnecessary fields
+		for (let i = 0; i < unnecessaryFields.length; i++) {
+			delete sample[unnecessaryFields[i]];
+		}
 		
 		// assign thead
 		let thead = "";
 		let fields = Object.keys(sample);
-		
-		// remove unnecessary field, again ???
-		{
-			fields = fields.filter(m => !unnecessaryFields.includes(m));
-		}
-		
 		for (let i=0;i<fields.length;i++) {
 			let field = fields[i];
 			
@@ -382,21 +320,6 @@ let callAPI = async (url_00) => {
 			
 			
 			
-			// sessionId
-			let sessionId = obj["session"];
-			
-			// itemName
-			let itemName = obj["name"];
-			
-			// status
-			let status = obj["status"];
-			
-			// need re-execute?
-			let status_to_re_execute = ["WAITING_FOR_RETRY", "FAILED", "DISMISS", "CREATED", "ERROR_ENQUEUE"];
-			let need_re_execute = status_to_re_execute.includes(status);
-			
-			
-			
 			
 			let myText = "";
 			for (let j=0;j<fields.length;j++) {
@@ -413,41 +336,6 @@ let callAPI = async (url_00) => {
 				
 				let tmp_value = "<td>" + tvalue + "</td>";
 				
-				if (j == 1) {
-					
-					// extract schedule_name from description
-					let tmp_description = tvalue;
-					let schedule_name = tmp_description.substring(0, tmp_description.length - ". [aa0f88c1ba214218a5a8f4284dabbd2d]".length);
-					schedule_name = schedule_name.substring("Auto-generated by schedule ".length, schedule_name.length);
-					
-					// link to schedule
-					tmp_value = "<td><a target=\"_blank\" href=\"http://localhost:3000/schedules/" + schedule_name + "\">" + schedule_name + "</a></td>";
-					
-				}
-				
-				if (j == 2) {
-					
-					// link to session
-					
-					
-				}
-				
-				if (j == 3) {
-					tmp_value = "<td><a target=\"_blank\" href=\"http://localhost:3000/sessions/" + sessionId + "/items/" + itemName + "\" style=\"font-family: consolas;\">" + tvalue + "</a></td>";
-				}
-				
-				if (j == 5 && need_re_execute) {
-					tmp_value =  "<td><span class=\"badge badge-warning rounded-pill d-inline\" style=\"padding:3px 10px 3px 10px; color: rgb(156, 0, 6); background-color:rgb(255, 199, 206);;\">" + tvalue + "</span></td>";
-				}
-				
-				if (j == 6) {
-					if (need_re_execute) {
-						tmp_value = "<td><button type=\"button\" class=\"btn btn-primary\" style=\"padding:0px 5px 0px 5px; font-size:1.00em;\">re-execute</button></td>";
-					} else {
-						tmp_value = "<td>" + "-" + "</td>";
-					}
-					
-				}
 				
 				myText += tmp_value;
 			}
@@ -458,15 +346,83 @@ let callAPI = async (url_00) => {
 		let tall = thead + tbody;
 		document.getElementById("myTable").innerHTML = tall;
 	} else {
+		inactive_pagination_buttons();
 		alert("objects.length > 0 ---> false");
 	}
 	document.getElementById("btn_submit").disabled = false;
+	active_pagination_buttons();
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- pagination display begin
+
+let maxPage = -1;
+let pageNumber = 1;
+let pageSize = 30;
+
+function setMaxPage(_m) {
+	maxPage = _m;
+	document.getElementById("btn_submit_center").innerHTML = pageNumber + "/" + maxPage;
+}
+
+function setCurrentPage(_m) {
+	pageNumber = _m;
+	document.getElementById("btn_submit_center").innerHTML = pageNumber + "/" + maxPage;
+}
+
+function submit_request_left() {
+	pageNumber = pageNumber - 1;
+	if (pageNumber < 1) {
+		alert("Invalid page number (0).");
+		pageNumber = 1;
+		return;
+	}
+	submit_request();
+}
+
+function submit_request_center() {
+	submit_request();
+}
+
+function submit_request_right() {
+	if (maxPage < 0) {
+		return;
+	}
+	pageNumber = pageNumber + 1;
+	if (pageNumber > maxPage) {
+		alert("Invalid page number (" + pageNumber + ").");
+		pageNumber = maxPage;
+		return;
+	}
+	submit_request();
+}
+
+function active_pagination_buttons() {
+	document.getElementById("btn_submit_center").disabled = false;
+	document.getElementById("btn_submit_left").disabled = false;
+	document.getElementById("btn_submit_right").disabled = false;
+	
+	document.getElementById("btn_submit_center").style.visibility = "visible";
+	document.getElementById("btn_submit_left").style.visibility = "visible";
+	document.getElementById("btn_submit_right").style.visibility = "visible";
+}
+
+function inactive_pagination_buttons() {
+	document.getElementById("btn_submit_center").disabled = true;
+	document.getElementById("btn_submit_left").disabled = true;
+	document.getElementById("btn_submit_right").disabled = true;
+	
+	document.getElementById("btn_submit_center").style.visibility = "hidden";
+	document.getElementById("btn_submit_left").style.visibility = "hidden";
+	document.getElementById("btn_submit_right").style.visibility = "hidden";
+	
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- pagination display end
 
 function submit_request() {
 
 	
-	
+	setMaxPage(-1);
 	
 	let t_api_from = "";
 	let t_api_to = "";
@@ -521,25 +477,35 @@ function submit_request() {
 		return;
 	}
 	
-	let arr_status = "";
-	if (document.getElementById("chb_01").checked) { arr_status += document.getElementById("lb_chb_01").innerHTML + ","; }
-	if (document.getElementById("chb_02").checked) { arr_status += document.getElementById("lb_chb_02").innerHTML + ","; }
-	if (document.getElementById("chb_03").checked) { arr_status += document.getElementById("lb_chb_03").innerHTML + ","; }
-	if (document.getElementById("chb_04").checked) { arr_status += document.getElementById("lb_chb_04").innerHTML + ","; }
-	if (document.getElementById("chb_05").checked) { arr_status += document.getElementById("lb_chb_05").innerHTML + ","; }
-	if (document.getElementById("chb_06").checked) { arr_status += document.getElementById("lb_chb_06").innerHTML + ","; }
-	if (document.getElementById("chb_07").checked) { arr_status += document.getElementById("lb_chb_07").innerHTML + ","; }
-	if (document.getElementById("chb_08").checked) { arr_status += document.getElementById("lb_chb_08").innerHTML + ","; }
-	if (document.getElementById("chb_09").checked) { arr_status += document.getElementById("lb_chb_09").innerHTML + ","; }
+	// query url
+	let url = "https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/events?pageNumber=" + pageNumber + "&pageSize=" + pageSize + "&time_start=" + t_api_from + "&time_stop=" + t_api_to;
 	
-	arr_status = arr_status.substr(0, arr_status.length - 1);
-	arr_status = arr_status.toLowerCase();
+	// Severities
+	let severities = "";
+	if (document.getElementById("chb_01").checked) { severities += document.getElementById("lb_chb_01").innerHTML + ","; }
+	if (document.getElementById("chb_02").checked) { severities += document.getElementById("lb_chb_02").innerHTML + ","; }
+	if (document.getElementById("chb_03").checked) { severities += document.getElementById("lb_chb_03").innerHTML + ","; }
+	if (document.getElementById("chb_04").checked) { severities += document.getElementById("lb_chb_04").innerHTML + ","; }
+	if (document.getElementById("chb_05").checked) { severities += document.getElementById("lb_chb_05").innerHTML + ","; }
+	severities = severities.substr(0, severities.length - 1);
+	severities = severities.toLowerCase();
+	if (severities.length > 0) {
+		url += "&severities=" + severities;
+	}
 	
-	let url = "https://orapigw-ex-dev.orplc.com/wtransfer/1.0.0/workspaces/default/items?time_start=" + t_api_from + "&time_stop=" + t_api_to + "&status=" + arr_status;
+	// Source
+	let string_source = "" + document.getElementById("f_search_source").value;
+	if (string_source.length > 0) {
+		url += "&source=" + string_source;
+	}
 	
+	// Description
+	let string_description = "" + document.getElementById("f_search_description").value;
+	if (string_description.length > 0) {
+		url += "&description=" + string_description;
+	}
 	
 	callAPI(url);
-	
 }
 
 
